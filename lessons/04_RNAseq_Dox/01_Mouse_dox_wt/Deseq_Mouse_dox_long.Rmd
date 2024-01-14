@@ -90,6 +90,8 @@ Let's officially run DeSeq2 these are the steps we will take
 "dds" (DESeqDataSet) :: "DESeqDataSetFromMatrix".
 This comes from sample sheet.
 
+#TEST
+
 # --- sample sheet needs to be factored! ----
 
 ```{R factor sample sheet}

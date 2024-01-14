@@ -1,0 +1,92 @@
+---
+title: "00_MAC_install_nextflow"
+author: "JR"
+date: "2023-12-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installing nextflow locally on a mac (similar for PC)
+
+#1: First we need to determine if you have a JAVA version between 11-21
+If you aren't sure you can download it here for free:
+
+https://www.oracle.com/java/technologies/downloads/
+I chose this one: Install Java 21 (DMG) for MacOS
+Follow instructions in the "disk image" or .DMG downloaded
+
+
+#2: Let's get Nextflow installed in our bin directory
+
+Find a place you want to make a "bin" folder that has
+open permissions so you don't need a password to change it.
+
+For MacOS the main directory is /Users/<computer_name>
+
+I am going to install nextflow in: Users/rinnadmin
+
+# Let's install Nextflow Locally MacOS!
+```{bash installing nextflow}
+
+cd Users/<your folder>
+
+# make a bin directory
+mkdir bin
+
+# move into bin folder
+cd bin
+
+#install nextflow
+wget -qO- https://get.nextflow.io | bash
+# or
+curl -s https://get.nextflow.io | bash
+
+# NOTE: curl and wget are bash commands to go grab stuff from websites
+# MORE INFO on variations of nextflow installs if you want differnet versions etc
+https://www.nextflow.io/docs/latest/getstarted.html
+
+```
+
+# Finding the $PATH
+Awesome we now have nextflow installed - and probably a new JAVA :)
+Yet we need to have your computer know where to speak nextflow
+$PATH tells your computer where to look for languages and commands
+
+So all we need to do is add nextflow to the $PATH
+
+# Adding nextflow to the $PATH
+```{bash adding nextflow to our $PATH}
+
+#let's see what is in our $PATH
+echo $PATH
+
+# hmmm : seperated data - let's make that easier to read with "tr"
+echo $PATH | tr ":" "\n"
+# Nice much easier to see all the places the $PATH leads
+
+# Now we need to use a bash "text editor" nano to add the path to $PATH
+# sudo just gives us permissions to do so - you will need to type in pswd
+sudo nano /etc/paths.d/nextflow
+
+# now add the nextflow file path to $PATH
+# type in :
+/Users/rinnadmin/bin
+# or 
+/Users/<folder_you_chose>/bin
+
+# Now just quit the session and open new terminal and type:
+nextflow -version 
+
+# You should get the version number - if not .. it's not installed
+
+```
+
+# More helpful info for understanding $PATH on a Mac
+https://pimylifeup.com/macos-path-environment-variable/#:~:text=To%20temporarily%20set%20the%20path%20environment%20variable%20on,of%20the%20line%2C%20we%20reference%20%E2%80%9C%20%24PATH%20%E2%80%9C.
+
+
+
+

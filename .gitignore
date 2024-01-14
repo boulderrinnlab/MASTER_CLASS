@@ -4,7 +4,6 @@
 .Ruserdata
 *DATA*
 *GENOME*
-*lessons
 .Rproj.user
 .Rhistory
 .RData
@@ -50,5 +49,3 @@ work/*
 *.gtf
 *fa
 *.bed
-lessons/*
-testing

@@ -1,0 +1,146 @@
+---
+title: "Deseq2_mouse_Dox_data"
+author: "JR"
+date: "2024-01-12"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+
+#install.packages("textshape")
+
+
+
+library(DESeq2)
+
+```
+
+
+## We are going to run Deseq2 on the results of our NF_CORE RNAseq pipeline
+We have now explored our pipeline outputs and we proceed with Salmon Counts for each gene
+We first need to load in the counts table :
+
+
+```{r loading and filtering count data}
+
+# Loading in counts from NF_CORE RNAseq Pipeline
+counts <- read_tsv("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/data/results/star_salmon/salmon.merged.gene_counts.tsv")
+
+# Moving Gene ID column
+counts <- column_to_rownames(counts, "gene_id") %>%
+as.matrix()
+
+# Rounding counts to whole numbers
+counts <- round(counts)
+
+
+# Filtering so Deseq is not getting too many 0's for normalization
+counts_filtered <- counts[rowSums(counts) > 1,]
+
+```
+
+Cool, now our counts sorted, but we need to connect to a sample sheet
+DESeq requires a sample sheet to know what samples and replicates are
+Let's make that now
+
+```{r smaple sheet}
+
+# First let's load a sample sheet containing samples/replicates
+# We make a condition column so DEseq will treat them as in same "group"
+
+samplesheet <- read_csv("sample_sheet.csv")
+
+# First let's put the counts columns in the same order as the samplesheet
+# If they are not then we would essentially be randomizing our data later!!
+counts <- counts_filtered[,samplesheet$sample_id]
+
+# Now we know they're in the same order, and we can change the names
+# It is nicer to have more descriptive names.
+colnames(counts_filtered) <- samplesheet$sample_id
+
+# This is a handy check point to make sure the labels in 
+# sample sheet and counts are similar
+all(colnames(counts_filtered) == samplesheet$sample_id)
+
+# Now our samplesheet and counts tables are organized the same
+
+# Double check
+colnames(counts_filtered) <- samplesheet$sample_id
+
+# Nice!
+```
+
+# goal: to get rlog normalized counts 
+Let's officially run DeSeq2 these are the steps we will take
+
+(1) create an "design" for Deseq as input to create a 
+"dds" (DESeqDataSet) :: "DESeqDataSetFromMatrix".
+This comes from sample sheet.
+
+# --- sample sheet needs to be factored! ----
+
+```{R factor sample sheet}
+# A FACTOR LEVEL is critical for DEseq2 to know which samples is which
+# We will take the condition from sample sheet to compare for differential expression
+# In this case it doesn't matter which comes first the "control"
+samplesheet$condition <- as.factor(samplesheet$condition)
+
+# Now that the samplesheet is ready to used in DESeq2, 
+# we'll write it out for future use.
+write_rds(samplesheet, "final_samplesheet.rds")
+```
+
+
+(2) run deseq to create a dds (DESeqDataSet) 
+this requires a matrix of rounded counts (made above)
+::  DESeq(dds)
+
+(3) normalize the counts to "rlog_counts" ::
+rlog(dds, blind = TRUE)
+
+# Important info on this here:
+https://compbiocore.github.io/deseq-workshop-1/assets/deseq_workshop_1.html
+
+(4) retreive rlog counts using :: assay(rlog_counts)
+
+```{R essential set up to running DeSeq}
+
+# (1) first run DESeq2 by creating a dds object.
+# We use the function "DESeqDataSetFromMatrix"
+# With parameters of countData, colData, design
+
+dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+                              # this is our counts data we read in
+                              colData = samplesheet,
+                              # telling DeSeq what env variable to use for sample sheet
+                              design = ~ condition)
+                              # perhaps most important is "condition" is a factor in samplesheet 
+
+# (2) run DESeq2 function on dds object
+dds <- DESeq(dds)
+
+# (3) Normalize counts (rlog)
+# This basically is rank counts normalized to std error in replicates.
+rlog_counts <- rlog(dds, blind = TRUE)
+
+# (4) now we retrieve the values using the "assay" function that converts to rlog_counts)
+rlog_counts_matrix <- assay(rlog_counts)
+
+# Now we can write this out and START from here in the future.
+# create new folder 'rlog_count_matrices'
+write_rds(rlog_counts_matrix, "results/rlog_counts_all.rds")
+
+```

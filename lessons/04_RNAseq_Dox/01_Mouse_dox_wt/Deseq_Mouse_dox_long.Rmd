@@ -90,7 +90,7 @@ Let's officially run DeSeq2 these are the steps we will take
 "dds" (DESeqDataSet) :: "DESeqDataSetFromMatrix".
 This comes from sample sheet.
 
-#TEST
+
 
 # --- sample sheet needs to be factored! ----
 
@@ -146,3 +146,25 @@ rlog_counts_matrix <- assay(rlog_counts)
 write_rds(rlog_counts_matrix, "results/rlog_counts_all.rds")
 
 ```
+
+# Above we did all-vs-all conditions 
+# We could also factor the sample sheet to have all timepoints
+# versus 0
+
+#TODO: Mingfeng
+
+```{r}
+
+```
+
+
+# Now adding Linear model to test across time
+# Linear model doesn't make sense since all we have is dox treated over time
+```{r}
+
+wt_overexp_long_dds <- DESeqDataSetFromMatrix(countData = counts_filtered, 
+                                          colData = wt_overexp_long_samples, 
+                                          design = ~ firre_induced + timepoint + timepoint*firre_induced)
+
+```
+

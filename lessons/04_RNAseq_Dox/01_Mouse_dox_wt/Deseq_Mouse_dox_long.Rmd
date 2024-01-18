@@ -65,7 +65,7 @@ samplesheet <- read_csv("sample_sheet.csv")
 
 # First let's put the counts columns in the same order as the samplesheet
 # If they are not then we would essentially be randomizing our data later!!
-counts <- counts_filtered[,samplesheet$sample_id]
+# counts <- counts_filtered[,samplesheet$sample_id]
 
 # Now we know they're in the same order, and we can change the names
 # It is nicer to have more descriptive names.
@@ -141,9 +141,31 @@ rlog_counts <- rlog(dds, blind = TRUE)
 # (4) now we retrieve the values using the "assay" function that converts to rlog_counts)
 rlog_counts_matrix <- assay(rlog_counts)
 
+# We now have a bunch more results embedded in the dds object
+resultsNames(dds)
+
+
+
 # Now we can write this out and START from here in the future.
 # create new folder 'rlog_count_matrices'
 write_rds(rlog_counts_matrix, "results/rlog_counts_all.rds")
+
+```
+
+# Let's look at the results !
+```{r}
+
+res <- results(dds, name = "X")
+
+# We can further index the information for just this sample:
+res_df <- res %>% as.data.frame() %>%
+  rownames_to_column("gene_id") %>%
+  merge(g2s) %>%
+  mutate(result_name = "condition_membrane_fraction_vs_total")
+
+# Looking to see log2 fold change range
+summary(res_df$log2FoldChange)
+hist(res_df$log2FoldChange)
 
 ```
 

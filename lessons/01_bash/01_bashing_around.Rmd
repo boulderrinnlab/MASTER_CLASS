@@ -1,6 +1,6 @@
 ---
-title: "02_bashing_data"
-date: "7/6/2022"
+title: "01_bash-ing_around"
+date: "1/31/2024"
 output: github_document
 ---
 
@@ -24,7 +24,7 @@ pwd - tells you the pathway you are currently at (very useful actually!)
 
 ```{BASH}
 
-cd /scratch/Shares/rinnclass/CLASS_2023/
+cd /scratch/Shares/rinnclass/MASTER_CLASS/
 ls
 pwd
 
@@ -180,25 +180,6 @@ Imagine how much time one uses typing long file paths in the terminal. For examp
 /Shares/rinn_class/data/CLASS_2021
 
 That is no fun to type every time and then go to the directory of interest. 
-
-Good news there is a solution (used by nextflow and just how useful later) its called a sym-link and you have probably used them before as all URLs on the internet are sym-links. 
-
-Let's make a sym-link to the class folder in your home directory 
-
-```{BASH}
-
-cd ~/
-# or some directory you use a lot on your local computer
-
-# creating a sym link with "ln -s /file_path
-ln -s /scratch/Shares/rinnclass/CLASS_2022/<identikey> CLASS 
-
-# what happened
-ls
-
-```
-
-Now you see a simlink called CLASS. You just cd CLASS and voila you are in class :)
 
 Another handy short cut is to see how big a folder is. 
 Often you are downloading to or working on a folder and need to see if it became bigger or smaller. 

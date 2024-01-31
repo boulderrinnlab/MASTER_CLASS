@@ -4,18 +4,12 @@ date: "1/31/2024"
 output: github_document
 ---
 
+# All code to follow along can be found here:
+https://github.com/boulderrinnlab/MASTER_CLASS/blob/main/lessons/01_bash/01_bashing_around.Rmd
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-options(stringsAsFactors = FALSE,
-        dplyr.summarise.inform = FALSE,
-        tidyverse.quiet = TRUE)
-```
+# Youtube video for this class is here :
 
 Let's start with some of the very basics of BASH to navigate servers and your command line:
-
-Youtube video for this class is here :
-https://youtu.be/yqENuEzE1KY
 
 # First commands:
 cd - to change directories
@@ -41,7 +35,7 @@ Basically I typically always use these flags
 # let's create your directory
 
 ```{BASH}
-cd /scratch/Shares/rinnclass/CLASS_2023/
+cd /scratch/Shares/rinnclass/MASTER_CLASS/
 
 mkdir NAME_of_dir
 
@@ -141,11 +135,21 @@ mv test.txt practice
 ls
 
 # Alternatively If we want to copy the file we can use "cp"
-# note that if you use "cp" the file will be duplicated whereas "mv" just chanes the file path.
+# note that if you use "cp" the file will be duplicated whereas "mv" just changes the file path.
 
-cp test2.txt /practice
+nano test4.txt
+# type something 
 
-# note simply changes file path and cp recreates the entire directory.
+cp test4.txt practice
+# see if it's there 
+cd practice
+ls
+# good 
+# now go back up one directory
+cd ..
+ls
+# we have two copies of test4 !
+# note mv simply changes file path and cp recreates the entire directory.
 
 ```
 
@@ -174,12 +178,6 @@ cd practice
 # note that "../" means one directory above the current one and "../../" prefix means two dir above
 mv *.txt ../
 ```
-
-Imagine how much time one uses typing long file paths in the terminal. For example, in this class we will be using:
-
-/Shares/rinn_class/data/CLASS_2021
-
-That is no fun to type every time and then go to the directory of interest. 
 
 Another handy short cut is to see how big a folder is. 
 Often you are downloading to or working on a folder and need to see if it became bigger or smaller. 

@@ -19,8 +19,10 @@ library(purrr)
 library(magrittr)
 library(pheatmap)
 library(textshape)
+library(Rcpp)
 
 #install.packages("textshape")
+# install.packages("Rcpp")
 
 
 

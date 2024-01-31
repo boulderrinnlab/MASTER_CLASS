@@ -9,7 +9,18 @@ https://github.com/boulderrinnlab/MASTER_CLASS/blob/main/lessons/01_bash/01_bash
 
 # Youtube video for this class is here :
 
-Let's start with some of the very basics of BASH to navigate servers and your command line:
+Let's start with some of the very basics of BASH to navigate servers and your command line.
+
+# Wait a minute ! What is BASH :)? 
+BASH is an application to run UNIX or LINUX commands. So essentially we are about to learn
+UNIX/LINUX commands and BASH is an application in our terminal. It opens a way to interface and
+run these commands. Don't worry if it is confusing - here we will see how to use it - then
+we will get more into this later in class. However, for now this is your first use of commands 
+in a programming language !!
+
+# But if your curious now you can get a good description here:
+https://opensource.com/resources/what-bash
+
 
 # First commands:
 cd - to change directories
@@ -18,7 +29,7 @@ pwd - tells you the pathway you are currently at (very useful actually!)
 
 ```{BASH}
 
-cd /scratch/Shares/rinnclass/MASTER_CLASS/
+cd ~/
 ls
 pwd
 
@@ -35,7 +46,7 @@ Basically I typically always use these flags
 # let's create your directory
 
 ```{BASH}
-cd /scratch/Shares/rinnclass/MASTER_CLASS/
+cd ~/
 
 mkdir NAME_of_dir
 
@@ -185,14 +196,16 @@ This is best done wtih disk usage "du"
 
 ```{BASH}
 # change file path to home directory
-cd ~/
+cd ~/practice
   
 # checking on the size of this directory 
 du -sh ~/
   
 ```
-
 The -sh flag is for "s"ummary and "h"uman readable
+
+# You may have just realized it's important to cancel commands :) !!
+That is just ctrl-c :)
 
 
 |||||||||||||||||||||||||||||||||

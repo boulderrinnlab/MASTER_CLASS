@@ -44,6 +44,7 @@ Save it somewhere (save public and private).
 
 ```{bash}
 cd ~/
+ls -lah
 cd .ssh
 ls -lah
 

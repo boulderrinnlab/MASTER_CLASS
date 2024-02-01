@@ -146,12 +146,13 @@ It's bad enoguh to have to do those steps, but worse github doesn't allow it any
 git remote -version
 # oh no it has defaulted to https - let's fix that
 
-git remote set-url orgin git@github.com:<YOUR GITHUB NAME>/REPOSITORY_name
+git remote add orgin git@github.com:<YOUR GITHUB NAME>/REPOSITORY_name
 # so that won't work as written you need to add your github name and repo name
 # this is mine but it won't work. Why not? Because you don't have my SSH key :)
 # change this example to match your info:
+git remote add origin git@github.com:genehomics/genehomics
 
-git remote set-url origin git@github.com:genehomics/genehomics
+# Note you can also get your
 
 # let's double check
 git remote -v

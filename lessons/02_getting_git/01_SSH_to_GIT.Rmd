@@ -1,0 +1,81 @@
+---
+title: "SSH_connect_to_GIT"
+author: "JR"
+date: "2024-02-01"
+output: html_document
+---
+
+
+# GOAL : To use our newly created SSH key (id_rsa.pub) to connect to GitHub.
+Git is a programming language that tracks changes to any documents. You tell
+git which documents to track in a "Repository" or really a folder :)
+
+This is amazingly useful, as you can change code, copy code and make changes and 
+it's always tracked. There is also GitHub which is a web application that makes
+seeing and going through these changes easier. Just to say git is a command language
+and git hub is a web application to store and retreive them in a more user friendly way.
+
+We will see the utility of Git and GitHub throughout our class -- SO LET'S GET STARTED !!
+
+Video for this class is here:
+
+Video to creat SSH key is here:
+
+
+# Step 1: connect our local computer to GitHub
+```{bash}
+
+# Go to your .ssh folder where we created our "id_rsa.pub" SSH key
+#NOTE: do not use id_rsa (that one is private and for you only)
+
+cd ~/.ssh
+
+# Now copy the contents of id_rsa.pub
+
+cat id_rsa.pub
+
+# COPY THIS TO YOUR CLIP BOARD
+
+```
+
+# Step 2 create a github account.
+https://github.com/join
+
+
+# Step 3: Paste in your SSH Key into SSH Keys on Github
+On the top right of your github page you will see an icon for your site
+Typically starts out as something that looks like a bad minecraft object.
+
+Click that and go down to "settings" has a cog icon
+
+On the left sidebar there is a tab called "SSH and CPG Keys" it has a key icon
+Click that 
+
+On top right: click add new SSH Key 
+Paste in your "id_rsa.pub" key 
+Don't forget to title it - I typically call it whatever type of computer I am using
+to remember better (You may end up with lots of key :)
+
+# YOU DID IT ! You connected your computer to github 
+
+############ CU STUDENTS ############
+
+# Repeat this same process for your SSH key on Fiji 
+```{bash}
+
+cd ~/.ssh
+
+# Now copy the contents of id_rsa.pub
+cat id_rsa.pub
+# COPY THIS TO YOUR CLIP BOARD
+
+# Go back to github and make a new SSH key and paste in (title Fiji or something like that)
+
+```
+
+# NICE - we are connected locally and via our supercomputer Fiji to Github
+
+# Now let's make a repository and track it !
+See this video:
+
+

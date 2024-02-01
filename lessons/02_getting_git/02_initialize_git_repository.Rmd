@@ -1,0 +1,201 @@
+---
+title: "02_Initialize_GIT_Repository"
+author: "JR"
+date: "2024-02-01"
+output: html_document
+---
+
+# GOAL : Create a git repository that is tracked
+
+We are going to start to use git and github. Git is the 
+language (or commands) we will use to track anychanges and
+connect to our github site to store all our documents from class.
+
+Warning: Git is confusing :) often you get stuck and things go 
+whonky, but it's ok the more you use it the more you learn how to
+fix these things. 
+
+# Good news : we are providing a step by step tutorial that works!
+Here we are going to start by making a practice respository to get 
+familar with some git basics and how git can "push" to github. We won't be using this repository for class - so feel free to delete after. In the next video we will "clone" the class repository to get
+all the code needed for class! In just a few steps you can copy months worth of work -- one reason why github is so awesome and 
+a great sharing community or network !
+
+Let's get started
+
+#Step 1: Creat a repository on your github website 
+
+On the top pannel click "repositories"
+
+On far right green button - click on "new"
+
+You will see:
+
+Owner name (your github name)/blank box
+
+# Step2: name the repository whatever you want
+
+Don't click anything else
+
+# Step 3: at the bottom select create repository (green button)
+Nice you have your first repository !
+Important: Github is giving you instructions on how to set up the 
+repository - we will do mostly the same
+
+You may want to copy these instructions for your notes somewhere
+Nonetheless we will go through mostly the same with a couple tweeks
+
+# NOTE: Github defaults to Https - we don't want that :)
+We are going to use SSH - don't worry about it for now
+but essentially this will give us better connection from our computer to github.
+
+# Step 4: Create a folder somewhere on your computer 
+# Also for CU students you will do the same steps below on Fiji
+```{bash}
+cd ~/
+
+mkdir genehomics #or whatever you want to call your repository
+
+# make some file
+nano test.txt
+# type something in it.
+
+nano test2.txt
+# type something in it
+# We made a couple of files to explore the next steps
+
+```
+
+# Cool now we are ready to initiate git
+```{git}
+
+# to intiate we use the command:
+git init
+# note when we type git we are calling up that "language" or program
+
+ls -lah
+# now you should see a .git file ! That means git will track all the files in this directory
+# even if you make folders in here
+#NOTE you don't want to track big files so we can block them with .gitignore we will make soon
+```
+# Awesome we have a repository tracked by git !
+Now we are going to add them to the git tracking with git add
+But first let's check out out git status with git status
+# Git add (commands)
+```{git}
+
+git status
+# we see that the text files we made are "modified" in git status.
+# Now we will add them to git tracking - there are several ways to do this:
+
+git add test.txt
+git status
+# Cool now we see that test.txt has been moved to "staged" it's ready for next step commit
+
+git add .
+# CAREFUL: this will add all modified files
+# or you can do git add --all to add all files that are modified. 
+git add --all
+
+# Cool now all of them are added to "staged"
+
+```
+
+# Now let's add a readme as github suggested
+```{bash}
+echo "# genehomics" >> README.md
+# echo just prints whatever is in the quotes
+# just use out repository name
+# the >> means put this in the file name (README.md)
+# Note md stands for markdown or nice way of writting code (we will do a lot of this)
+
+```
+
+# Cool we just used BASH to make a README.md file 
+Now we are ready to commit these changes to our git tracking system
+
+```{git}
+
+git commit -m "my first commit "
+# This is the standard way of doing a commit with a message
+# The message is indicated by the -m
+# then in quotes is the message that will show up on github
+
+# git then tells us how many files were commited (3)
+```
+
+# Nice, we are almost there but now we need to tell our computer where to commit
+
+```{git}
+
+git branch -M main
+# This tells github that we want to commit to our main branch (we will get into branches later)
+# For now this is the only branch and the one github defaults to
+
+```
+# We are still missing one key piece : which github user to move this to !
+Now we will set this to your github site
+However, the default instructions give you an https link to your github site
+But this won't work well as you would have to type your name and password everytime.
+It's bad enoguh to have to do those steps, but worse github doesn't allow it anymore :)
+
+# Solution: use SSH and make a secure connection so this happens seemlessly
+
+```{git}
+
+git remote -version
+# oh no it has defaulted to https - let's fix that
+
+git remote set-url orgin git@github.com:<YOUR GITHUB NAME>/REPOSITORY_name
+# so that won't work as written you need to add your github name and repo name
+# this is mine but it won't work. Why not? Because you don't have my SSH key :)
+# change this example to match your info:
+
+git remote set-url origin git@github.com:genehomics/genehomics
+
+# let's double check
+git remote -v
+
+# Nice no https !
+
+```
+# Cool, now the last step git push!
+```{git}
+# this will now take all committed documents and push them to your github website!
+git push -u origin main
+# this saying put these files on my github website on the main branch !
+# now check your github website and these changes should be there !!
+```
+# Super cool, now we have a tracked version of our work so any changes will be tracked
+Let's try that out by changing something in our text files
+
+```{git bash}
+
+nano test.txt
+# type something new
+git add test.txt
+git commit -m "my second commit"
+git push
+
+# Note once you have set up the origin you don't have to do it again !
+```
+# Awesome you got git ! Check your website for the new message and changes !
+
+Always remember when your done working -- follow these steps:
+
+git add
+git commit -m "message of some sort"
+git push
+
+# That's it 
+
+# CU students follow the same steps on FIJI !
+
+See git is not that confusing - or is it :)
+Ok, I better add, commit and push this .RMD file to MASTER_CLASS :)
+
+
+
+
+
+

@@ -1,0 +1,77 @@
+---
+title: "Cloning_class_via_fork"
+author: "JR"
+date: "2024-02-05"
+output: html_document
+---
+
+# Did you know you can copy any code available on github????
+Yes, indeed repositories can be shared. This could be to collaborate
+you would "clone" someone else's repository make changes and request them to merge.
+
+So there is a great community of coders on github and you can either
+just grab someone's code and play around on your git hub. Or you could even fix something on someone's repository by cloning -> fixing some code -> sending a merge request to include your fix.
+
+For now we are going to clone the class github repository. So all 
+the code needed for this class can be copied to your github website!
+We will also include some instructions so you can sync in case the 
+the class repository changes since the last time you were practicing!
+
+Let's starting cloning !! It's also known as "forking"
+
+# Step 1: Log into your github
+
+# Step 2: Search for boulderrinnlab - click on MASTER_CLASS
+
+# Step 3: on the top right there is a button that say "FORK"
+Click the fork button and call it whatever you want for your github repository name.
+
+# Refresh your github website - Voila you have the class
+Awesome!! But how will you work on this ?? You wouldn't want to work
+from the web version - ewww... we want to work from the TERMINAL yeah !!
+
+- So we have a few more steps to go:
+
+# Step 4: On your git hub you will see a "CODE" button on the class repo.
+Click that button and switch to SSH (not HTTPS!)
+
+# Cool, now let's open a terminal and navigate to where you want to work on this.
+Nice found a good home for the class? Ok just to note that when we clone it to your local
+computer it will make a folder with the repository name. Just to say you don't have to make a folder called class - just go upstream of where you want it and the folder will be made.
+
+# Step 5: when you are where you want to be type:
+```{git}
+
+git clone [Paste SSH CODE KEY from code buton on your github for class repo]
+
+```
+Nice if you do ls you should see a bunch of new files ! Almost there !
+We are going to take a couple more steps so you can sync any changes made to the class repo!
+
+# Step 6: Go back to boulderrinnlab class repo - copy SSH Code for that repo
+
+# Step 7: Go to terminal and navigate inside the clones folder (cd folder_name)
+
+# Step 8: Set upstream to boulderrinnlab github repo
+
+```{git}
+git remote add upstream [paste boulderrinnlab SSH code]
+# this will say there is an upstream repo I forked this from so you can grab changes
+
+git fetch upstream
+
+git checkout main
+
+git merge upstream/main
+
+```
+
+# Awesome any changes made on the class github you forked can be merged into your local github!
+
+##################
+Exercise
+##################
+
+Create some new files and push them to your github from your terminal into 
+your working version of the class.
+

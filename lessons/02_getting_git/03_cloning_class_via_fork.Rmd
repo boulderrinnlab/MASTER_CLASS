@@ -17,7 +17,15 @@ the code needed for this class can be copied to your github website!
 We will also include some instructions so you can sync in case the 
 the class repository changes since the last time you were practicing!
 
-Let's starting cloning !! It's also known as "forking"
+# More tips for forking here:
+https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo
+
+# More tips for syncing:
+https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+
+
+
+# Let's starting cloning !! It's also known as "forking"
 
 # Step 1: Log into your github
 

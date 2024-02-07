@@ -5,7 +5,7 @@ date: "2023-12-18"
 output: html_document
 ---
 
-# Goal: to install nextflow on super computer and locally on mac or PC (below)
+# Goal: to install nextflow on super computer FIJI
 # Youtube video for this class here:
 https://youtu.be/vTkoLFra5Lc?si=2fNQNl9LT0tXc-6H
 

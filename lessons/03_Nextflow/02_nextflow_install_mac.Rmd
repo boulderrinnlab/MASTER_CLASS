@@ -1,0 +1,156 @@
+---
+title: "MAC_install_nextflow"
+author: "JR"
+date: "2024-02-07"
+output: html_document
+---
+
+# Goal: to install nextflow on a macintosh laptop computer
+
+# Youtube video for this class here:
+https://youtu.be/GfWkLo5vzME
+
+
+############################
+Background and significance
+############################
+
+Nextflow is a task management program that will do a bunch of work for us !
+It makes a "container" (singularity or docker) that is empty. Then it will 
+install all the software you need in that container in the order it's needed - Woah !
+
+This in part due to NF_CORE (see link below) that are pre-build genomics pipelines.
+AMAZINGLY they have a pipeline for almost every analysis you could think of. Just imagine
+if you had to install each step in the pipeline (ooofda) that would be a ton of work. So 
+thanks to Nextflow managing all the tasks in the pipeline and NF_CORE for organizing the 
+pipeline we save soooo much time !
+
+# More on nextflow:
+https://www.nextflow.io/
+
+
+# More on NF_CORE:
+https://nf-co.re/
+
+# Importantly: NF_CORE / NEXTFLOW have version tracking and QC analysis for each step !
+This is huge !! With out this you would have to install dozens of programs and keep track of 
+which version you used (results can change depending on version). Even better, NF_CORE has figured
+out which data you might want to see right away and makes nice figures so you can determine the quality 
+of your data, which samples are more similar and much much more - #WOW# We will check out all this in
+just a few classes, but in the meantime we need to install NEXTFLOW.
+
+#############################
+Game plan
+#############################
+
+# First we will install nextflow on a mac laptop. 
+Nextflow is a "language" so we also 
+need to tell Fiji where to look for this language so it can speak it when 
+called to do so. This is in the $PATH.
+
+The $PATH is essentially where your computer will look for commands and languages.
+For example we have used unix commands in a bash application (session) and the
+$PATH had to know where to look for them. 
+
+In short, the $PATH looks up where any language is installed (nextflow, python anything) -
+So whenever you install a new language always think is it in my $PATH. One easy way around this 
+is to make a folder where all your installs go and then link that folder in your $PATH.
+
+Ok first things first let's install nextflow (for free) on a mac - then we will connect to $PATH
+
+
+###########################
+MAC OSX install Nextflow
+###########################
+## Installing nextflow locally on a mac (similar for PC)
+
+#1: First we need to determine if you have a JAVA version between 11-21
+
+```{bash}
+java -version
+
+```
+
+If you aren't sure you can download it here for free:
+
+https://www.oracle.com/java/technologies/downloads/
+I chose this one: Install Java 21 (DMG) for MacOS
+Follow instructions in the "disk image" or .DMG downloaded
+
+# ALSO install instruction for JAVA on PC/Linux and OSX here:
+https://docs.oracle.com/en/java/javase/21/install/overview-jdk-installation.html#GUID-8677A77F-231A-40F7-98B9-1FD0B48C346A
+
+# Cool now we have java 21 !
+
+#2: Let's get Nextflow installed in our bin directory
+
+Find a place you want to make a "bin" folder that has
+open permissions so you don't need a password to change it.
+
+For MacOS the main directory is /Users/<computer_name>
+
+I am going to install nextflow in: Users/rinnadmin
+
+# Let's install Nextflow Locally MacOS!
+```{bash installing nextflow}
+
+cd Users/<your folder>
+
+# make a bin directory
+mkdir bin
+
+# move into bin folder
+cd bin
+
+#install nextflow
+
+curl -s https://get.nextflow.io | bash
+# Note where this installed as that directory path needs to be added to $PATH
+pwd
+
+# NOTE: curl and wget are bash commands to go grab stuff from websites
+# MORE INFO on variations of nextflow installs if you want differnet versions etc
+https://www.nextflow.io/docs/latest/getstarted.html
+
+```
+
+# Finding the $PATH
+Awesome we now have nextflow installed - and probably a new JAVA :)
+Yet we need to have your computer know where to speak nextflow
+$PATH tells your computer where to look for languages and commands
+
+So all we need to do is add nextflow to the $PATH
+
+# Adding nextflow to the $PATH
+```{bash adding nextflow to our $PATH}
+
+#let's see what is in our $PATH
+echo $PATH
+
+# hmmm : seperated data - let's make that easier to read with "tr"
+echo $PATH | tr ":" "\n"
+# Nice much easier to see all the places the $PATH leads
+
+# Now we need to use a bash "text editor" nano to add the path to $PATH
+# sudo just gives us permissions to do so - you will need to type in pswd
+sudo nano /etc/paths.d/nextflow
+
+# now add the nextflow file path to $PATH
+# type in :
+/Users/rinnadmin/bin
+# or 
+/Users/<folder_you_chose>/bin
+
+# let's see what changed
+echo $PATH | tr ":" "\n"
+
+# Now just quit the session and open new terminal and type:
+nextflow -version 
+
+# You should get the version number - if not .. it's not installed
+
+```
+
+# More helpful info for understanding $PATH on a Mac
+https://pimylifeup.com/macos-path-environment-variable/#:~:text=To%20temporarily%20set%20the%20path%20environment%20variable%20on,of%20the%20line%2C%20we%20reference%20%E2%80%9C%20%24PATH%20%E2%80%9C.
+

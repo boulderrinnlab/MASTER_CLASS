@@ -1,0 +1,140 @@
+---
+title: "01_FIJI_install_nextflow"
+author: "JR"
+date: "2023-12-18"
+output: html_document
+---
+
+# Goal: to install nextflow on super computer and locally on mac or PC (below)
+# Youtube video for this class here:
+https://youtu.be/vTkoLFra5Lc?si=2fNQNl9LT0tXc-6H
+
+
+############################
+Background and significance
+############################
+
+Nextflow is a task management program that will do a bunch of work for us !
+It makes a "container" (singularity or docker) that is empty. Then it will 
+install all the software you need in that container in the order it's needed - Woah !
+
+This in part due to NF_CORE (see link below) that are pre-build genomics pipelines.
+AMAZINGLY they have a pipeline for almost every analysis you could think of. Just imagine
+if you had to install each step in the pipeline (ooofda) that would be a ton of work. So 
+thanks to Nextflow managing all the tasks in the pipeline and NF_CORE for organizing the 
+pipeline we save soooo much time !
+
+# More on nextflow:
+https://www.nextflow.io/
+
+
+# More on NF_CORE:
+https://nf-co.re/
+
+# Importantly: NF_CORE / NEXTFLOW have version tracking and QC analysis for each step !
+This is huge !! With out this you would have to install dozens of programs and keep track of 
+which version you used (results can change depending on version). Even better, NF_CORE has figured
+out which data you might want to see right away and makes nice figures so you can determine the quality 
+of your data, which samples are more similar and much much more - #WOW# We will check out all this in
+just a few classes, but in the meantime we need to install NEXTFLOW.
+
+#############################
+Game plan
+#############################
+
+# First we will install nextflow on Fiji. 
+Nextflow is a "language" so we also 
+need to tell Fiji where to look for this language so it can speak it when 
+called to do so. This is in the $PATH.
+
+The $PATH is essentially where your computer will look for commands and languages.
+For example we have used unix commands in a bash application (sesssion) and the
+$PATH had to know where to look for them. 
+
+In short, the $PATH looks up where any language is installed (nextflow, python anything) -
+So whenever you install a new language always think is it in my $PATH. One easy way around this 
+is to make a folder where all your installs go and then link that folder in your $PATH.
+
+Ok first things first let's install nextflow (for free) on Fiji - then we will connect to $PATH
+
+#############################
+(1) Install Nextflow on Fiji
+#############################
+
+# Step 1: module load
+Nextflow also depends on java and requires version 11 or higher. We have worked with BioFrontiers 
+IT (BIT) team to be able to use the latest version of Java 21 so we can run nextflow properly.
+
+# IF YOU DON'T MODULE LOAD Java 21, NEXTFLOW won't run :)
+
+```{bash}
+# module load Java 21 from anywhere on Fiji
+# This makes the shell you are on have it but goes away if you close it !
+# So you have to do this everytime you run Nextflow
+
+module load openjdk/21.0.1
+```
+
+# Nice we have Java 21 running !
+
+Now we need to install - easiest install ever :)
+
+```{bash}
+# we want to install in a bin dir
+cd ~/
+ls # you probably don't have a bin folder so let's make one
+
+makdir bin
+cd bin
+
+# Now to install
+wget -qO- https://get.nextflow.io | bash
+# or
+curl -s https://get.nextflow.io | bash
+
+# let's make sure it's installed
+nextflow -version
+
+```
+
+# Awesome you have nextflow running in this session
+But now we want to add this to your $path and a .bash_profile doc.
+This way you can call nextflow from anywhere and your $PATH
+will remember for every session moving forward.
+
+```{bash}
+# Making .bash_profile (place fiji looks to use languages upon initiating session)
+cd ~/
+
+nano .bash_profile
+
+# past in this information to your bin directory
+export PATH="$PATH:/Users/<IDENTIKEY>/bin
+
+# or do a pwd from your bin directory
+
+# Exit nano with ctrl-x and y to save.
+
+```
+
+Or we can add this directory directly to our path using bash:
+```{bash}
+
+export PATH="$( echo $PATH| tr : '\n' |grep -v /Users/jori2700/bin | paste -s -d: )"
+```
+
+# Nice we have nextflow installed to be sure close your session
+Open a new session in new terminal shell
+Then test if $PATH finds your install
+```{bash}
+
+nextflow -version
+```
+
+# If it pops up your all set !
+
+
+
+
+
+

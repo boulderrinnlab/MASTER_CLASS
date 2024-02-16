@@ -1,0 +1,157 @@
+---
+title: "03_shell_script_NF_CORE_RNAseq"
+author: "JR"
+date: "2024-02-16"
+output: html_document
+---
+
+
+# Or last required input for the NF_CORE RNAseq pipeline is the SHELL SCRIPT (.sh file)
+A shell script is a bunch of bash commands that will be run in a row. We can also add other
+languages by calling them up. In this case we will also invoke nextflow.
+
+So basically you can think of the .sh file as a list of tasks to run the pipeline rather
+that typing them in one by one (which you could in theory do - but why waste time :)
+
+I will paste in an example "run.sh" shell script and go line by line and then paste in at 
+the end of the document.
+
+```{bash}
+## This first line is called a shebang 
+## It simply let's the computer know its running bash for these commands
+## that start with #
+
+#!/bin/bash
+
+## Here we are setting the queue to the long queue as this may take 8+ hours
+
+#SBATCH -p long
+
+## We are giving the job a name ... call it whatever you want
+## Just remember to change it for each project !
+
+#SBATCH --job-name=mouse_wt_long_dox_timecourse
+
+## Now we are saying email us if the pipeline ends or fails
+
+#SBATCH --mail-type=END,FAIL
+
+## Setting the email to do this
+#SBATCH --mail-user=your@email.edu 
+
+## Now we are setting up resources on Fiji for now think of a node
+## as a laptop or computer - we are checking out a very large computer :)
+
+#SBATCH --nodes=1
+
+## Here we want to do just one task - run the pipeline and Nextflow commands below 
+## We did many forks in the config file but the ntasks would be like asking two
+## laptops to work on the same job and compile across each other - sounds complicated
+## We don't want to make this complicated but it is possible.
+
+#SBATCH --ntasks=1
+
+## Setting the memory for how much Fiji needs 6GB is plenty for this.
+#SBATCH --mem=6gb
+
+## THis is the "wall clock" it is IMPORTANT to try and make it as accurate as possible!
+## Otherwise the computer will sit idle after a job and not let someone else use it.
+## So optimize with a guess of more time at first, then see how long it took to run and optimize.
+## THis takes about 8 hours so I am setting it to 10 hours just in case
+
+#SBATCH --time=10:00:00
+
+## Here we are making an output file that will help us track progress - otherwise we would be blind !
+
+#SBATCH --output=nextflow.out
+
+## Here we are setting an .err file to be made so we can see where errors occured (and they do often :)
+
+#SBATCH --error=nextflow.err
+
+## Now these commands may look familiar we are just invoking them as we would type in one by one on the terminal.
+pwd; hostname; date
+echo "Here we go You've requested $SLURM_CPUS_ON_NODE core."
+
+
+## This is the "container" we are using - Fiji is set up with singularity - you may also use docker.
+## Singularity has a bit more security but costs money - docker is free but less secure.
+module load singularity/3.1.1
+
+
+## Now we are invokign nextflow and to "run" nf-core/rnaseq version 3.14.0
+nextflow run nf-core/rnaseq -r 3.14.0 \
+
+## This is an awesome flag so that if something fails we can "resume" where it left off !!
+-resume \
+
+## Now we are telling nextflow that the container is singularity - above we invoked in on fiji
+-profile singularity \
+
+## This is our samplesheet that is a critical input (see 01_NF_CORE_RNAseq_samplesheet.Rmd for more info)
+--input design.csv \
+
+## We are telling nextflow where our fastq files are (aslo see 01_NF_CORE_RNAseq...Rmd for more)
+--reads /scratch/Shares/rinnclass/MASTER_CLASS/DATA/mouse_wt_long_timecourse/*{_R1,_R2}.fastq.gz \
+
+## THIS IS IMPORTANT ! WE need a genome :) I have hosted the mouse genome version we are using here:
+
+
+## IT IS CRITICAL to keep track of which version of the genome you use - there are many!
+--fasta /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/GRCm38.p6.genome.fa \
+
+## Same for the annotation of the genome version. This tells us the position of all the genes in the genome.
+## So CRITICAL that it is tracked as the annotations also change frequently.
+## This file is hosted here:
+
+--gtf /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf \
+
+## We are telling nextflow to use the "salmon" aligner to align our reads. The NF_CORE RNAseq 
+## Pipeline has many options, but we are telling it to use this one.
+## More info on the awesomness of Salmon can be found here:
+  # https://combine-lab.github.io/salmon/about/
+
+--pseudo_aligner salmon \
+
+## We are using a GTF file (above) from gencode so we are telling NF_CORE.
+--gencode \
+
+## We are now having NF_CORE email us if there is an error or finishes.
+## Note NF_CORE makes funny job names - check it out :)
+--email your.email@colorado.edu \
+
+## We are now invoking the language C to read the nextflow.config file
+-c nextflow.config
+
+
+## Finally we are printing out the date (you can do the same thing in bash terminal)
+## This helps us track when it finished or errored out.
+date
+
+```
+
+
+# Cool ! We are ready to run the pipeline !! We need :
+
+# 1) .config
+# 2) samplesheet.csv
+# 3) .sh script above (pasted in below with out markdown)
+
+One last thing is we need to make the .sh file executable so it can run the commands
+and not just be a text file :)
+
+To do that you do:
+```{bash}
+chmod u+x filename.sh
+
+```
+
+# And now 3,2, 1 run the pipeline!!
+```{bash}
+
+sbatch filename.sh
+
+```
+
+# Now in a few hours you will have done RNAseq and get lots of results already !!
+# THANK YOU NF_CORE YOUR THE BEST !!

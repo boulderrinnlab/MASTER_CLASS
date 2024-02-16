@@ -1,0 +1,48 @@
+---
+title: "02_Nextflow.config"
+author: "JR"
+date: "2024-02-16"
+output: html_document
+---
+
+# We are on the next step in setting up the NF_CORE RNAseq pipeline: the .config file.
+
+This will be called nextflow.config. IT contains information for nextflow on how to talk to your
+computer. Fiji being used in class "speaks in the language of SLURM" so we need to tell nextflow that.
+Think of nextflow as C3PO from starwars that can speak many languages we just need specify which one.
+
+There are a lot of parameters that can be modifed and more information is here:
+
+https://www.nextflow.io/docs/latest/config.html
+
+# Our nextflow.config for Fiji 
+
+We will go through this line by line and then paste it all together at the end.
+
+```{bash}
+
+# process tells nextflow what it needs to do so anything in between the { } it will do as one process
+process {
+
+# We are setting the language or executor to SLURM that Fiji runs.
+# If you are doing this on your laptop you want to change this to local.
+  executor='slurm'
+
+# Fiji has a long and short queue the short is reserved for quicker more intensive
+# projects so we are setting the queue to the long queu as it may take 8+ hours to run all this RNAseq!
+  queue='long'
+
+# Next we set the memory to 16GB this is how much RAM nextflow can use. Remember Nextflow is just a task manager
+# so it doesn't really need that much memory - I should change it to less, but so excited to run the pipeline :)
+# So this could be set to 1GB or 2GB if running on laptop etc. It's just how much memory nextflow has to speak to your
+# computer which needs more RAM to run the software in the pipeline (container).
+  memory='16 GB'
+
+# Forks are how many tasks nextflow can manage at once. If you want things to go faster you can have more forks!
+# But you wouldn't want more forks than samples of RNAseq - we have 15 but fine with moving forward with 10 at a time.
+  maxForks=10
+}
+```
+
+
+# Ok that's the .config file (a requirement) Now let's move onto the shell script to run all this !!

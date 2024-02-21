@@ -88,7 +88,12 @@ nextflow run nf-core/rnaseq -r 3.14.0 \
 ## Now we are telling nextflow that the container is singularity - above we invoked in on fiji
 -profile singularity \
 
+## Here we are specifying where the pipeline output will be. Make this a specifc folder
+## where your run.sh, nextflow.config file are and do mkdir to make a folder then specify the path
+--outdir /scratch/Shares/rinnclass/MASTER_CLASS/<DIRECTORY NAME> \
+
 ## This is our samplesheet that is a critical input (see 01_NF_CORE_RNAseq_samplesheet.Rmd for more info)
+## NOTE 3.14 has updated to not needing replicates in design file but worked fine
 --input design.csv \
 
 ## We are telling nextflow where our fastq files are (aslo see 01_NF_CORE_RNAseq...Rmd for more)

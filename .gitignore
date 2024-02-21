@@ -1,3 +1,5 @@
+*.json
+*.sf
 .Rproj.user
 .Rhistory
 .RData
@@ -49,3 +51,5 @@ work/*
 *.gtf
 *fa
 *.bed
+*.gz
+

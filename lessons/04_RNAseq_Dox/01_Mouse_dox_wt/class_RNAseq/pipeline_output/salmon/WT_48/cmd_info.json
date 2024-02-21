@@ -1,0 +1,11 @@
+{
+    "salmon_version": "1.10.1",
+    "geneMap": "GRCm38.p6.genome.filtered.gtf",
+    "threads": "6",
+    "libType": "IU",
+    "index": "salmon",
+    "mates1": "WT_48_1_val_1.fq.gz",
+    "mates2": "WT_48_2_val_2.fq.gz",
+    "output": "WT_48",
+    "auxDir": "aux_info"
+}

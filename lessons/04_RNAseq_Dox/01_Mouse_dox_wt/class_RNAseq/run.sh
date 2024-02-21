@@ -18,6 +18,7 @@ module load singularity/3.1.1
 nextflow run nf-core/rnaseq -r 3.14.0 \
 -resume \
 -profile singularity \
+--outdir /scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/class_RNAseq/pipeline_output \
 --input samplesheet.csv \
 --reads /scratch/Shares/rinnclass/MASTER_CLASS/DATA/mouse_wt_long_timecourse/*{_R1,_R2}.fastq.gz \
 --fasta /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/GRCm38.p6.genome.fa \

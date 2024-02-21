@@ -1,0 +1,71 @@
+---
+title: "04_RUN_PIPELINE"
+author: "JR"
+date: "2024-02-21"
+output: html_document
+---
+
+### CONGRATULATIONS !!!! If you are here you are ready to run the pipeline !!
+
+# Fist make sure your run.sh is executbale 
+```{bash}
+
+chmod u+x run.sh
+```
+
+# HERE WE GO
+```{bash}
+# First we need to load java for nextflow to run
+module load openjdk/21.0.1
+
+# Now we run with the sbatch command to launch our shell script
+sbatch run.sh
+# the pipeline is officially running !
+
+```
+
+# However there maybe errors :)
+Let's see how to do some checking in on things:
+
+```{bash}
+
+# Let's see what is happening with the pipeline
+tail -f nextflow.out
+
+# Let's see if there are any errors:
+cat nextflow.err
+```
+
+# Hopefully we see a bunch of processes running and we are all good to go.
+
+However, we may want to learn how to cancel the job:
+First you want to see what jobs you have running - since we did 10 forks 
+it will likely be at least 10 jobs 
+
+To check on that we do:
+```{bash}
+
+squeue -u <identikey>
+# this lists all your jobs running
+
+```
+
+# you can grab a specific job by copying the job number using the command above
+
+# Sometimes you will just want to cancel everything you can do that by:
+```{bash}
+
+scancel -u <identikey>
+
+```
+
+# Nice, don't worry if things didn't work first try :)
+Usually, there is an input path that isn't correct 
+or design file has an issue. 
+
+# Good news is you can fix them in nano or on your computer and SFTP them back
+Then just do "sbatch run.sh" again and NEXTFLOW will resume right where it left off !
+
+# Congratulations on running a full RNAseq from read alignment to lots of analyses 
+# Now let's take a look at the output files and level up !
+

@@ -121,7 +121,7 @@ git commit -m "my first commit "
 # The message is indicated by the -m
 # then in quotes is the message that will show up on github
 
-# git then tells us how many files were commited (3)
+# git then tells us how many files were committed (3)
 ```
 
 # Nice, we are almost there but now we need to tell our computer where to commit
@@ -164,6 +164,12 @@ git remote -v
 ```{git}
 # this will now take all committed documents and push them to your github website!
 git push -u origin main
+
+# NOTE if you didn't make your github with your Colorado email - or if your using a different email.
+# You will have to add your email to your the git profile you are currently using - the command prompt
+# will provide the format and instructions
+
+
 # this saying put these files on my github website on the main branch !
 # now check your github website and these changes should be there !!
 ```

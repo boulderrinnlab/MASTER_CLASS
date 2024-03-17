@@ -1,3 +1,5 @@
+*.gz*
+*.summary
 *.json
 *.sf
 .Rproj.user

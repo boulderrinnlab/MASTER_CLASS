@@ -169,7 +169,7 @@ sbatch filename.sh
 #SBATCH -p long
 #SBATCH --job-name=mouse_wt_long_dox_timecourse
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=your.email@colorado.edu
+#SBATCH --mail-user=email@colorado.edu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=6gb
@@ -185,16 +185,16 @@ module load singularity/3.1.1
 nextflow run nf-core/rnaseq -r 3.14.0 \
 -resume \
 -profile singularity \
---input design.csv \
---reads /scratch/Shares/rinnclass/MASTER_CLASS/DATA/mouse_wt_long_timecourse/*{_R1,_R2}.fastq.gz \
---fasta /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/GRCm38.p6.genome.fa \
---gtf /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf \
+--input samplesheet.csv \
+--outdir /scratch/Shares/rinn/Kit/class_RNASeq/output_dir \
+--reads /scratch/Shares/rinn/ML/mouse_wt_long_timecourse/*{_R1,_R2}.fastq.gz \
+--fasta /scratch/Shares/rinn/ML/DESeq2/GENOMES/M25/GRCm38.p6.genome.fa \
+--gtf /scratch/Shares/rinn/ML/DESeq2/GENOMES/M25/gencode.vM25.annotation.gtf \
 --pseudo_aligner salmon \
 --gencode \
---email your.email@colorado.edu \
+--email emai1@colorado.edu \
 -c nextflow.config
 
-date
 
 
 ```

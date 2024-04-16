@@ -1,0 +1,37 @@
+---
+title: "01_install_R_studio"
+author: "JR"
+date: "2024-03-17"
+output: html_document
+---
+# Video for this lesson:
+https://youtu.be/2EiXyGBsylY
+
+
+# Here we are going to install R studio Desktop (for Free)
+This will be for anyone wanting to do analyses on their local computer.
+
+It's a quick and easy install from this website :
+https://posit.co/download/rstudio-desktop/
+
+Just choose windows or mac and follow instructions.
+
+You should have Java 21 and R 4.3.3 already installed. That tutorial is here:
+https://youtu.be/6JtLcDSYb7U
+
+# Once you have R studio installed let's start a new project.
+On the top right of the R studio pane there is a button with an R shield and drop down
+CLick on the new project tab from the dropdown
+
+# Important make sure to select "fron existing directory"
+
+Browse to where you cloned the class repository and select that folder.
+You will see a .R project and .Rhistory file created.
+
+On the top right pane you will also see a "git" tab where you can now commit and push
+your changes from !
+
+For more on navigating around R studio please see this video:
+
+https://youtu.be/2EiXyGBsylY
+

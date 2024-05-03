@@ -8,500 +8,157 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-
 knitr::opts_chunk$set(echo = TRUE)
-library(IRanges)
-library(dplyr)
-library(tidyr)
-library(readr)
-library(ggplot2)
-library(purrr)
-library(magrittr)
-library(pheatmap)
-library(textshape)
-library(Rcpp)
+```
 
-#install.packages("textshape")
-# install.packages("Rcpp")
+# Goal to get our essential files in order to run deseq2!
+# Oh and to learn some basic R skills towards our goals!
+The input to DESEQ2 is going to want "counts" these came from the program
+Salmon. Basically, the number of reads over a gene. We also need to consider which 
+version of the gene we want. Genes come in different "isoforms" which have extra or less bits
+of RNA added to them. These annotations are a lot of work and difficult, but Salmon makes this easier!
 
+# More on salmon transcript quants, this is a basic outline of how Salmon works 
+Especially if you wanted to use it outside NF_CORE pipeline for RNAseq
+https://combine-lab.github.io/salmon/getting_started/
 
-#TODO ADD VIDEO
-library(DESeq2)
+For this we will use "merged_salmon_gene_counts" that gives
+the representative version of a gene that is being detected as expressed in the samples (in this case mESCs exposed to dox).
+This is just to note that you can also try and determine how isoforms change over time - but to get started we will keep it 
+simple, thanks to the program Salmon that ran in our pipeline.
 
+# First things first: let's get the RNAseq counts for all the genes in our GTF input file to the RNAseq pipeline.
+The counts we want are called "salmon.merged.gene_counts.tsv" they are in your NF_CORE pipeline output directory:
+......./pipeline_output/star_salmon/
+
+Please locate where this directory is in your output (helpful hint: copy and paste path to location using pwd)
+
+# Our first R function : read.table
+This function in R alows us to read in a table. There are many ways to do this but we will start with the basics
+Functions also have parameters to input. in this case we have a header and will call that, and where the rownames start).
+
+Note that the <- sets a variable. 
+
+# Let's run our first function to get our salmon mergened gene counts in a table
+# 1) Read in and clean up counts table
+```{r loading and cleaning up count data}
+# Let's take a look at the read.table function
+?read.table
+
+# we need to make the function write to an output object. To do so we use the 
+# <- assisgnement operator, here we are calling the salmon merged gene counts "counts_matrix"
+# Then we will call the read.table() function that first requires a file path to the counts in quotes
+# Note that in R functions follow with () where the parameter inputs are placed.
+# Then we will call up different parameters with a comma, in this case header = TRUE, row.names =1
+counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+
+# Nice, now we have an object called counts_matrix in our Environment Panel (top right)
+# Let's take a look 
+View(counts_matrix)
+```
+
+# 2) Making a dataframe of gene_id and gene_name
+Now let's make a table of gene_id and gene_name from the first two columns of counts_matrix
+The reason being that the gene_id is a unique identifying number and the gene_symbol is more intuitive name.
+We will use this a lot throughout our analyses.
+
+Note: that the gene_id is currently in a "meta" format so we need to move it into the table.
+To do this we will use the rownames function
+```{r create g2s object}
+
+# Creating a dataframe with gene_id and gene_symbol
+g2s <- data.frame(gene_id = rownames(counts_matrix), gene_symbol = counts_matrix[, 1])
+
+# Let's save this using write.csv
+write.csv(g2s, "results/g2s.csv")
 ```
 
 
-## We are going to run Deseq2 on the results of our NF_CORE RNAseq pipeline
-We have now explored our pipeline outputs and we proceed with Salmon Counts for each gene
-We first need to load in the counts table :
+```{r loading and cleaning up count data}
+# The first two columns are gene_id and gene_name
+# Those will be very handy let's make an object of these
 
+g2s <- data.frame(
+  gene_id = rownames(counts_matrix),
+  gene_name = counts_matrix[, 1]
+)
 
-```{r loading and filtering count data}
+# Note that rows or columns in black are "meta" meaning not really part of the matrix - just a label of sorts
+# Note that there is a column with characters for gene name - we want a pure number matrix, but can have meta labels.
+# Let's remove the gene name column for now and we will bring it back later.
 
-# Loading in counts from NF_CORE RNAseq Pipeline
-#counts <- read_tsv("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv")
-
-counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
-
-# removing gene names
+# removing gene names by indexing rows and columns via object[ rows, columns ]
+# here we take all the rows and remove the first column with -1 ]
 counts_matrix <-counts_matrix[, -1] 
-counts_matrix <- as.matrix(counts_matrix) 
-counts_matrix_rounded <-round(counts_matrix)
+View(counts_matrix)
 
+# turning into a matrix using as.matrix() function
+counts_matrix <- as.matrix(counts_matrix) 
+View(counts_matrix)
+
+# Rounding the numbers with the round() function
+counts_matrix_rounded <-round(counts_matrix)
+View(counts_matrix_rounded)
+
+# Note meta nature of cols and rows
+
+```
+
+# Nice now we have a good matrix of count values for each gene across all dox exposure times.
+Next we are going to filter the counts matrix to only include genes with any expression at any time.
+To do so we will learn how to index tables and use logical arguments - all in one line of code !
+
+counts_filtered <- counts_matrix_rounded[rowSums(counts_matrix_rounded) > 1,]
+
+# Here is what is going on in that one line of code - it's a lot, but good R skills :)
+(1) create object "counts_filtered" with assignment operator <-
+(2) we are going to index into "counts_matrix_rounded" using "[ ]" indexing.
+This basically means we are going into that object and anything between [ ] is what we want back
+(3) we call function rowSums() which sums the values across all rows (genes)
+(4) rowSums needs to know what to sum on which is counts_matrix_rounded inside the rowSums() function
+(5) We can add a logical argument as well. In this case any sum across a row that is greater than 1.
+(6) *** indexing is [rows,columns] so far we have just selected the rows we want. 
+To include all the columns we can just leave it blank after the comma.
+So in the end we have [rows, and all the columns originally present]
+
+# Let's filter to genes that have at least one value!
+
+# 3) Filtering counts 
+```{R filtering}
 
 # Filtering so Deseq is not getting too many 0's for normalization
 counts_filtered <- counts_matrix_rounded[rowSums(counts_matrix_rounded) > 1,]
 
-# lastly change to integer mode for the data
-
-
-
-
-##########################
-##############################SAMPLE SHEET
-
-### TRYING THIS DIFFERENTLY
-
-# COLDATA = sample sheet
-
-deseq_samples = data.frame(
-  sample_id = colnames(counts_matrix))
-
-
-split_values <- strsplit(deseq_samples$sample_id, "_")
-
-time_values <- sapply(split_values, function(x) x[[2]])
-
-replicate_values <- sapply(split_values, function(x) x[[3]])
-
-deseq_samples$time_point <- time_values
-deseq_samples$replicate <- replicate_values
-
-
-#######FACTOR
-
-deseq_samples$time_point <- factor(deseq_samples$time_point)
-deseq_samples$replicate <- factor(deseq_samples$replicate)
-
-
-# A FACTOR LEVEL is critical for DEseq2 to know which samples is which
-# We will take the condition from sample sheet to compare for differential expression
-# In this case it doesn't matter which comes first the "control"
-
-
-
-
-##############################
-##############################DESEQ2
-    
-dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
-                              colData = deseq_samples,
-                              design = ~ time_point + replicate)
-
-dds <- DESeq(dds)
-
-#TODO result names
-results <- results(dds)
-
-significant_results <- results[which(results$padj < 0.05), ]
-
-
-
-
-
-
-#####################
-
-dds_2 <- DESeqDataSetFromMatrix(countData = counts_filtered,
-                              colData = deseq_samples,
-                              design = ~ time_point)
-
-dds_2 <- DESeq(dds_2)
-results_2 <- results(dds_2)
-
-significant_results_2 <- results[which(results_2$padj < 0.05), ]
-
-#######################################
-
-normalized_counts <- counts(dds, normalized = TRUE)
-gene_of_interest <- "ENSMUSG00000021270.13"
-gene_expression <- as.data.frame(normalized_counts[gene_of_interest, ])
-gene_expression$sample <- rownames_to_column(gene_expression)
-
-
-
-
-gene_expression_df <- data.frame(TimePoint = rownames(gene_expression),
-                                 Expression = as.numeric(gene_expression))
-
-
-ggplot(gene_expression, aes(x = TimePoint, y = Expression)) +
-  geom_line() +
-  labs(x = "Time Point", y = "Expression Level", title = paste("Expression Profile of", gene_of_interest)) +
-  theme_minimal()
-
-
-
-significant_results <- results[which(results$padj < 0.05), ]
-
-gene_of_interest <- rownames(significant_results)
-gene_of_interest <- "ENSMUSG00000021270.13"
-
-gene_expression <- normalized_counts[gene_of_interest, ]
-gene_expression_df <- data.frame(TimePoint = colnames(gene_expression),
-                                 Expression = as.numeric(gene_expression))
-
-
-
-
-
-
-
-
-gene_expression_df <- data.frame(TimePoint = colnames(gene_expression),
-                                 Expression = as.numeric(gene_expression))
-
-
-# results <- results(dds)
-
-expression_data <- assay(dds)
-expression_data_df <- as.data.frame(t(expression_data))
-expression_data_df$sample_id <- rownames(expression_data_df)
-expression_data_long <- gather(expression_data_df, TimePoint, Expression, -sample_id)
-
-
-expression_data_with_time_significant <- subset(expression_data_long, TimePoint %in% rownames(significant_genes))
-
-
-ggplot(expression_data_with_time_significant, aes(x = , y = Expression)) +
-  geom_line() +
-  facet_wrap(~TimePoint, scales = "free_y")  # Facet by gene for individual plots
-
-
-
-
-expression_data_with_time <- merge(expression_data_long, deseq_samples, by.x = "Sample", by.y = "sample_id", all.x = TRUE)
-
-
-
-
-
-
-expression_data_with_time <- merge(expression_data_df, deseq_samples, by.x = "Sample", by.y = "sample_id", all.x = TRUE)
-
-
-
-
-expression_data_df$Sample <- rownames(expression_data_df)
-
-expression_data_with_time <- merge(expression_data_df, deseq_samples, by.x = "Sample", by.y = "sample_id", all.x = TRUE)
-
-expression_data_long <- expression_data_with_time %>%
-  pivot_longer(cols = starts_with("WT_"), names_to = "TimePoint", values_to = "Expression")
-
-
-
-
-expression_data_long <- expression_data_with_time %>%
-  pivot_longer(
-
-
-expression_data$Sample <- rownames(expression_data)
-expression_data_df <- as.data.frame(t(expression_data))
-
-expression_data_with_time <- merge(expression_data_df, deseq_samples, by.x = "Sample", by.y = "sample_id", all.x = TRUE)
-
-
-expression_data_long <- expression_data_with_time %>%
-  pivot_longer(cols = starts_with("X"), names_to = "TimePoint", values_to = "Expression")
-
-
-
-
-expression_data_long <- expression_data_with_time %>%
-  pivot_longer(cols = starts_with("WT"), names_to = "TimePoint", values_to = "Expression")
-
-
-significant_genes <- subset(results, padj < 0.05)
-
-expression_data <- t(expression_data)
-expression_data$Gene <- rownames(expression_data)
-
-
-# GOES WRONG HERE
-expression_data <- as.data.frame(expression_data)
-
-expression_data_long <- expression_data %>%
-  gather(TimePoint, Expression, -Gene)
-
-
-
-
-
-
-
-
-
-
-
-#expression_data$Gene <- rownames(expression_data)
-
-
-
-
-
-
-
-
-expression_data <- as.data.frame(expression_data)
-expression_data$Gene <- rownames(expression_data)
-
-
-expression_data_long <- expression_data %>%
-  pivot_longer(cols names_to = "TimePoint", values_to = "Expression")
-
-
-
-
-
-significant_genes_plot <- subset(results, padj < 0.05)
-
-# Extract the gene IDs of significant genes
-significant_gene_ids <- rownames(significant_genes_plot)
-
-
-expression_data_significant <- expression[expression_data %in% significant_gene_ids, ]
-
-
-
-# expression_data <- t(expression_data)
-
-
-expression_data$Gene <- rownames(expression_data)
-
-expression_data <- as.data.frame(expression_data)
-
-
-expression_data_long <- expression_data %>%
-  pivot_longer(cols = -Gene, names_to = "TimePoint", values_to = "Expression")
-
-
-significant_genes_plot <- subset(results, padj < 0.05)
-
-# Extract the gene IDs of significant genes
-significant_gene_ids <- rownames(significant_genes_plot)
-
-# Filter expression data to include only significant genes
-expression_data_significant <- expression_data_long[expression_data_long$Gene %in% significant_gene_ids, ]
-
-# Plot expression profiles of significant genes using ggplot2
-ggplot(expression_data_significant, aes(x = TimePoint, y = Expression, color = Gene)) +
-  geom_line() +
-  labs(x = "Time Point", y = "Expression Level", title = "Expression Profiles of Significant Genes") +
-  theme_minimal() +
-  facet_wrap(~Gene, scales = "free_y")  # Facet by gene for individual plots
-
-
-
-
-
-
-
-
-
-
-
-
-
-rownames(significant_results$rownames)
-
-gene_of_interest <- "ENSMUSG00000021270.13"
-
-expression_data_gene <- expression_data_long[expression_data_long$Gene == gene_of_interest, ]
-
-ggplot(expression_data_gene, aes(x = TimePoint, y = Expression)) +
-  geom_line() +
-  labs(x = "Time Point", y = "Expression Level", title = paste("Expression Profile of", gene_of_interest)) +
-  theme_minimal()
-
-
-
-
-
-
-
-
-
-
-ggplot(expression_data_long, aes(x = TimePoint, y = Expression, color = Gene)) +
-  geom_line() +
-  labs(x = "Time Point", y = "Expression Level", color = "Gene") +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  facet_wrap(~Gene, scales = "free_y")  # Facet by gene for individual plots
-
-
-
-
-
-
+## Check out values of counts_matrix and counts_filtered in Environment panel (top right)
+# How many genes were filtered out by this indexing? Hint compare counts_matrix_rounded with counts_filtered
 
 ```
 
-Cool, now our counts sorted, but we need to connect to a sample sheet
-DESeq requires a sample sheet to know what samples and replicates are
-Let's make that now
+# Well done we learned some Rskills while making input counts table and sample files !
+Now let's save all of our work ! We have made a few key objects:
+- counts filtered
+- counts_matrix 
+- deseq_samples
 
-```{r smaple sheet}
+We will start our next steps toward differential gene expression analysis with DESEQ2.
+So let's save them in a way we can easily reload in our next session.
 
-# First let's load a sample sheet containing samples/replicates
-# We make a condition column so DEseq will treat them as in same "group"
+# 4) Saving data in .Rdata format!
+First by making a results folder
+Check your working directory and set accordingly :) !
 
-samplesheet <- read_csv("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/data/samplesheet.csv")
+```{r saving env objects into .RData structure}
 
-# First let's put the counts columns in the same order as the samplesheet
-# If they are not then we would essentially be randomizing our data later!!
-# counts <- counts_filtered[,samplesheet$sample_id]
-
-# Now we know they're in the same order, and we can change the names
-# It is nicer to have more descriptive names.
-colnames(counts_filtered) <- samplesheet$sample
-
-# This is a handy check point to make sure the labels in 
-# sample sheet and counts are similar
-all(colnames(counts_filtered) == samplesheet$sample)
-
-# Now our samplesheet and counts tables are organized the same
-
-# Double check
-colnames(counts_filtered) <- samplesheet$sample
-
-# Nice!
-
-
-
-
-
-
+save(counts_filtered, counts_matrix, g2s, file = "results/count_files.RData")
+# awesome - now we never have to load in consensus peaks again :)
 ```
 
-# goal: to get rlog normalized counts 
-Let's officially run DeSeq2 these are the steps we will take
+# erase environment and reload!
+```{r reload}
 
-(1) create an "design" for Deseq as input to create a 
-"dds" (DESeqDataSet) :: "DESeqDataSetFromMatrix".
-This comes from sample sheet.
-
-
-
-# --- sample sheet needs to be factored! ----
-
-```{R factor sample sheet}
-#TODO Make a column for group to factor for DESEQ2
-samplesheet$group <- samplesheet$sample 
-
-samplesheet$group <- strsplit(samplesheet$group, split = "_")
-?stringsp
-
-#TODO Make a column for group to factor for DESEQ2
-
-
-
-# A FACTOR LEVEL is critical for DEseq2 to know which samples is which
-# We will take the condition from sample sheet to compare for differential expression
-# In this case it doesn't matter which comes first the "control"
-samplesheet$condition <- as.factor(samplesheet$sample)
-
-samplesheet$condition <- 
-?mutate
-
-
-# Now that the samplesheet is ready to used in DESeq2, 
-# we'll write it out for future use.
-write_rds(samplesheet, "final_samplesheet.rds")
+load("results/count_files.RData", verbose = T)
+# super handy 
 ```
 
+# congratulations you have made some result files using Rskills !
 
-(2) run deseq to create a dds (DESeqDataSet) 
-this requires a matrix of rounded counts (made above)
-::  DESeq(dds)
-
-(3) normalize the counts to "rlog_counts" ::
-rlog(dds, blind = TRUE)
-
-# Important info on this here:
-https://compbiocore.github.io/deseq-workshop-1/assets/deseq_workshop_1.html
-
-(4) retreive rlog counts using :: assay(rlog_counts)
-
-```{R essential set up to running DeSeq}
-
-# (1) first run DESeq2 by creating a dds object.
-# We use the function "DESeqDataSetFromMatrix"
-# With parameters of countData, colData, design
-
-dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
-                              # this is our counts data we read in
-                              colData = samplesheet,
-                              # telling DeSeq what env variable to use for sample sheet
-                              design = ~ condition)
-                              # perhaps most important is "condition" is a factor in samplesheet 
-
-# (2) run DESeq2 function on dds object
-dds <- DESeq(dds)
-
-# (3) Normalize counts (rlog)
-# This basically is rank counts normalized to std error in replicates.
-rlog_counts <- rlog(dds, blind = TRUE)
-
-# (4) now we retrieve the values using the "assay" function that converts to rlog_counts)
-rlog_counts_matrix <- assay(rlog_counts)
-
-# We now have a bunch more results embedded in the dds object
-resultsNames(dds)
-
-
-
-# Now we can write this out and START from here in the future.
-# create new folder 'rlog_count_matrices'
-write_rds(rlog_counts_matrix, "results/rlog_counts_all.rds")
-
-```
-
-# Let's look at the results !
-```{r}
-
-res <- results(dds, name = "X")
-
-# We can further index the information for just this sample:
-res_df <- res %>% as.data.frame() %>%
-  rownames_to_column("gene_id") %>%
-  merge(g2s) %>%
-  mutate(result_name = "condition_membrane_fraction_vs_total")
-
-# Looking to see log2 fold change range
-summary(res_df$log2FoldChange)
-hist(res_df$log2FoldChange)
-
-```
-
-# Above we did all-vs-all conditions 
-# We could also factor the sample sheet to have all timepoints
-# versus 0
-
-#TODO: Mingfeng
-
-```{r}
-
-```
-
-
-# Now adding Linear model to test across time
-# Linear model doesn't make sense since all we have is dox treated over time
-```{r}
-
-wt_overexp_long_dds <- DESeqDataSetFromMatrix(countData = counts_filtered, 
-                                          colData = wt_overexp_long_samples, 
-                                          design = ~ firre_induced + timepoint + timepoint*firre_induced)
-
-```

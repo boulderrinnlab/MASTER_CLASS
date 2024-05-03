@@ -1,0 +1,124 @@
+---
+title: "01_run_DESEQ2"
+author: "JR"
+date: "2024-04-19"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+library(Rcpp)
+library(DESeq2)
+```
+
+# Goal to run DESEQ2 and get familiar with results
+Using DESEQ2 we will determine which genes change in RNA expression levels
+at different times of dox exposure. Let's officially start doing some analysis!
+
+We are going to start slowly and stepwise to get a feel for DESEQ2.
+It is highly recommended that you read these documents for deeper dives!
+
+https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+
+# Let's start by loading in our counts_matrix and sample info
+```{r loading in counts and sample info}
+
+# /scratch/Shares/rinnclass/MASTER_CLASS/lessons/05_RNAseq_in_R_studio/results
+load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
+load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
+
+```
+
+# (1) first run DESeq2 by creating a dds (DESEQ Data Structure) 
+We use the function "DESeqDataSetFromMatrix"
+With parameters of countData, colData, design
+
+dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+                              # this is our counts data we read in
+                              colData = desseq_samples,
+                              # telling DeSeq what env variable to use for sample sheet
+                              design = ~ condition)
+                              # perhaps most important is "condition" is a factor in deseq_samples
+                              # we will be using time_point
+                              
+# Ok let's make a dds !
+
+```{r run DEseqDataSetFromMatrix }
+
+dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+                              colData = deseq_samples,
+                              design = ~ time_point)
+```
+
+# Now run DESeq function that does all the magic !
+```{r run DEseqDataSetFromMatrix }
+
+dds <- DESeq(dds)
+
+```
+
+# Not only was that fast but numerous analyses were just performed !
+Let's take a look at the result outputs
+Important: to see which analyses DESEQ2 performed 
+
+```{r results}
+
+# resultsNames function retreives names of results
+resultsNames(dds)
+
+# Nice we see this output:
+# "Intercept" "time_point_12_vs_0" "time_point_24_vs_0" "time_point_48_vs_0" "time_point_96_vs_0"
+# DESEQ found genes differnetial expresion values for each time point relative to 0 time point.
+
+
+```
+# RESULT: we have compared gene expression values relative to 0 timepoint.
+It is good to start making a notation of results you wan to keep track of.
+In this case it is key to record what analysis was done.
+
+# Next:Running DeSeq to create rlog normalzied counts!
+Although a lot of normalization has already occurred from
+Salmon (where we got the counts) we now need to determine the 
+distribution of expression values and normalize again to prevent
+low abundance genes inflating significant differential expression. 
+
+
+#  Normalize counts (rlog function)
+This basically is rank counts normalized to std error in replicates.
+
+```{r rlog }
+rlog_counts <- rlog(dds, blind = TRUE)
+
+```
+
+# now we retrieve the values using the "assay" function that converts to rlog_counts
+```{r}
+rlog_counts_matrix <- assay(rlog_counts)
+
+```
+
+# Finally, let's save this rlog matrix to use in our future analyses and plotting.
+We will save this as R Data Structure .rds -- this will keep the object stored properly
+to be loaded into the environment to use for downstream analyses.
+
+```{r}
+
+write_rds(rlog_counts_matrix, "results/rlog_counts_mouse_dox_long.rds")
+
+```
+
+# Nice you now have run DESEQ2! 
+There is a lot more to explore
+In the meantime enjoy all the analyses DESEQ2 just did for you !

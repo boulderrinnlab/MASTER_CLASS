@@ -1,0 +1,39 @@
+---
+title: "03_analysis_all_time_points"
+author: "JR"
+date: "2024-05-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+res_12 <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
+res_24 <- results(mouse_long_dox_dds, contrast = c("time_point", "24", "0"))
+res_48 <- results(mouse_long_dox_dds, contrast = c("time_point", "48", "0"))
+res_96 <- results(mouse_long_dox_dds, contrast = c("time_point", "96", "0"))
+
+df <- rbind(
+	data.frame(time = 12, res_12),
+	data.frame(time = 24, res_24),
+	data.frame(time = 48, res_48),
+	data.frame(time = 96, res_96)
+)
+
+
+filtered_df <- df[df$padj < 0.05, ]
+
+
+df <- results(mouse_long_dox_dds, list(c("time_point", "12", "0"), c("time_point", "24", "0"), c("time_point", "48", "0"), c("time_point", "96", "0")))
+
+df <- rbind(
+	data.frame(time = 0, res_0),
+	data.frame(time = 12, res_12),
+	data.frame(time = 24, res_24),
+	data.frame(time = 48, res_48),
+	data.frame(time = 96, res_96)
+)
+
+```

@@ -1,0 +1,220 @@
+---
+title: "02_DESEQ2_start_analysis"
+author: "JR"
+date: "2024-04-21"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DESeq2)
+library(readr)
+library(magrittr)
+library(tibble)
+library(dplyr)
+library(ggplot2)
+
+BiocManager::install("apeglm")
+
+```
+
+```{r}
+load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
+load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
+```
+
+# Long mouse dox time course DDS
+```{r}
+# create DDS
+mouse_long_dox_dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+                                                 colData = deseq_samples,
+                                                 design = ~ time_point)
+
+
+# Run DESEQ2 on DDS
+mouse_long_dox_dds <- DESeq(mouse_long_dox_dds)
+```
+
+# Let's look at the results
+```{r}
+
+resultsNames(mouse_long_dox_dds)
+
+# Cool, we see a bunch of results of time_point_X_vs_0 
+# Those are our results !
+# We just don't want the intercept file
+```
+
+# Now let;s make result files for each time point comparision using results() function
+
+Here's a breakdown of the arguments:
+"time_point" is the name of the factor (column) in your count data that you want to compare.
+"12" is the level of the factor that you want to compare against.
+"0" is the reference level of the factor (i.e., the baseline).
+```{r}
+# fist let's see how results work
+# contrast = c("time_point", "12", "0") specifies that you want to compare 
+# the "12" level of the "time_point" factor against the "0" level.
+res_0 <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
+
+# it's an S4 object and abit confusing let's turn into a data frame:
+
+res_0_df <- data.frame(time = 12, res_0)
+
+# That is a bit better - as a dataframe
+# But out gene_id is still in the "meta" 
+# lets move it into a column with rownames_to_column
+
+res_0_df <- rownames_to_column(res_0_df, "gene_id")
+
+# Cool, now let's merge in the g2s to get the gene names
+# we need to merge with a column that exists in both DFs = gene_id
+
+res_0_df <- merge(res_0_df, g2s, by = c("gene_id" = "gene_id"))
+
+# cool now we can actually start to do some analysis for the 
+#  0 vs 12 hour time point.
+# We see about 700 genes that are significantly differential between 0 and 12 hours !
+```
+
+# Now let's practice filtering this data frame on padj adn lfcSE
+```{r}
+
+# filter() function for padj
+filtered_res_0_df <- res_0_df %>%
+  filter(padj < 0.05)
+
+# cool now we see 720 genes with padj < 0.05
+
+# let's filter on both padj adn log2FoldChange
+filtered_res_0_df_2 <- res_0_df %>%
+  filter(padj < 0.05, abs(log2FoldChange) > 1)
+
+# Interesting this is now only 42 genes !! 
+# That is a special number :)
+
+```
+
+# let's take a look at what "type of genes" are changing at 12 hours.
+# Let's use red_0_df_2
+
+We can extract the gene names and then do gene ontology
+```{r}
+
+# printing out the gene_symbol column 
+cool_genes <- cat(paste(filtered_res_0_df_2$gene_symbol, collapse = "\n"))
+
+# copy and paste into EnrichR 
+#https://maayanlab.cloud/Enrichr/
+
+
+```
+# Interesting, seems like our genes are involved in mitochonrial functions
+Nice, we just started analyzing significant genes that respond to dox at 12 hours.
+
+We will dive much deeper into plotting as we go, but for now a standard first plot
+is a volcano plot. Let's make one !
+
+# volcano plot of genes significant at 12 hours
+```{r}
+
+library(ggplot2)
+
+ggplot(filtered_res_0_df_2, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point() +
+  theme_classic() +
+  labs(x = "Log2 Fold Change", y = "-Log10 Adjusted P-value") +
+  geom_hline(yintercept = -log10(0.05), color = "red") +
+  geom_vline(xintercept = c(-1, 1), color = "blue")
+
+```
+
+# Note that there is only one value for each gene but we had three replicates?
+That is becuase when we use results() function we get the mean across replicates 
+if we want all the values we need to use counts
+```{r}
+# First let's see what are column names are for each replicate:
+colnames(counts(mouse_long_dox_dds, normalized = FALSE))
+# They all start with WT_0
+
+# cool now we can grep all the 0 timepoint values using "^WT_0_"
+counts_0 <- counts(mouse_long_dox_dds, normalized = TRUE)[, grep("^WT_0_", colnames(counts(mouse_long_dox_dds, normalized = TRUE)))]
+
+# Let's grab the counts for 12 hour time point as well
+counts_12 <- counts(mouse_long_dox_dds, normalized = TRUE)[, grep("^WT_12_", colnames(counts(mouse_long_dox_dds, normalized = TRUE)))]
+
+# Nice now we have an object of each replicate for 0 hour counts and 
+res_counts <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
+significant_genes_counts <- res_counts[res_counts$padj < 0.05, ]
+
+# we see NAs let's get rid of them
+res_counts <- res_counts[!(is.na)(res_counts$padj), ]
+
+significant_genes_counts <- res_counts[res_counts$padj < 0.05, ]
+
+
+
+plotMA(res, main = "MA Plot: 0 vs 12 hours", ylim = c(-5, 5))
+points(significant_genes$baseMean, significant_genes$log2FoldChange, col = "red")
+
+# Cool this gave us fold change versus expression level or MA plot
+# This is a standard first plot and as usual the more expressed
+# the less the fold change
+```
+
+# Now let's plot the standard deviation across replicates between 0 and 12 hours
+```{r}
+# we are going to subset using %in% the signifcant genes from the counts object with all three replicates.
+counts_0_sig <- counts_0[rownames(significant_genes_counts) %in% rownames(counts_0), ]
+
+# Same for 12 hours
+counts_12_sig <- counts_12[rownames(significant_genes_counts) %in% rownames(counts_12), ]
+
+```
+
+# NOw we are going to calcualte the mean and standard deviation across replicates
+```{r}
+# mean
+mean_0 <- apply(counts_0_sig, 1, mean)
+
+# standard error
+se_0 <- apply(counts_0_sig, 1, function(x) sd(x)/sqrt(length(x)))
+
+# same for 12 hour counts
+mean_12 <- apply(counts_12_sig, 1, mean)
+
+# standar error 12 hours
+se_12 <- apply(counts_12_sig, 1, function(x) sd(x)/sqrt(length(x)))
+```
+
+# Now plotting 
+again we will go into this more just to see our results for now
+
+```{r}
+# Plot 0 vs 12 hours with error bars
+library(ggplot2)
+
+df <- data.frame(
+  gene = rownames(significant_genes_counts),
+  time_point = c(rep("0", length(mean_0)), rep("12", length(mean_12))),
+  mean = c(mean_0, mean_12),
+  se = c(se_0, se_12)
+)
+
+ggplot(df, aes(x = time_point, y = mean)) +
+  geom_point(aes(color = gene), position = position_dodge(0.1)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se, color = gene), position = position_dodge(0.1)) +
+  theme_classic() +
+  labs(x = "Time Point", y = "Normalized Counts")
+
+
+```
+
+
+
+
+
+
+

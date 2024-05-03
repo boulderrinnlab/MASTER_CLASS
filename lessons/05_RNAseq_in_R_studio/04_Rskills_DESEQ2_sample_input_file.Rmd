@@ -1,0 +1,121 @@
+---
+title: "04_deseq_sample_input_file"
+author: "JR"
+date: "2024-04-19"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Goal: learn Rskills to create a 'colData' input file for DESEQ2
+DESEQ2 not only needs the counts of RNA per gene, but also what each sample is.
+DESEQ has a parameter called "colData" that tells Deseq which timepoint and replicate
+is associated with which sample. 
+
+So all we need for DESEQ2 is input counts and colData. We already got our counts in order so lets load those!
+```{r loading counts objects}
+
+load("results/count_files.RData", verbose = T)
+
+```
+
+
+# Let's use our counts table to make the colData for DESEQ2 
+We will make a dataframe that has sample_id, timepoint and replicate
+A dataframe is like a excel sheet.
+
+# 1) Create a sample dataframe
+```{R colData file for DESEQ2}
+# First we will create a dataframe from counts matrix that includes all the column names
+# To do this we call the data.frame() function and inside make col called sample_id
+# that is equal to the names of the columns in count matrix (e.g., WT_0_1)
+deseq_samples <- data.frame(
+  sample_id = colnames(counts_matrix))
+
+# let's take a look
+View(deseq_samples)
+
+# There is good information in each sample_id and we can use code to seperate out.
+# First we will make an object called "split_values" to split sample_id by any underscore
+# Note we are indexing into deseq_samples using '$' to denote index $column_name
+# Note we use the function strsplit() to go into sample_id col and splitat " _ "
+split_values <- strsplit(deseq_samples$sample_id, "_")
+
+# Let's take a look 
+View(split_values)
+```
+
+# We just created a new dataframe to input our samples into DESEQ2
+Note we used the sample_id to keep track of the original naming
+This helps with reproducibility for tracking names acorss code.
+Let's keep using this practice and get more sample info from sample_id
+
+# 2) Learning Rfuncitons to retreive name info
+```{R colData file for DESEQ2}
+# Now we are going to learn another key function "sapply()"
+# This is essentially a built in for loop to go over all rows and perform the same function.
+# So here we will go through each row of split_values and run a "generic function(x)" 
+# We will then retain the second item which is the time point value in sample_id
+time_values <- sapply(split_values, function(x) x[[2]])
+
+# Similar to above we are using sapply to grab the third fragment in split_values
+# after two breaks at each "_" there are three parts - here we are grabbing the 3rd 
+# NOTE indexing the function of x, which number from the split to a specific number with [[ ]]
+replicate_values <- sapply(split_values, function(x) x[[3]])
+
+# Ok now we can do more indexing and make more columns in our deseq_samples dataframe!
+# The $ can allow you to index into a specific column or even create a new one.
+# so we are making a new column by adding $time_point onto deseq_sample. 
+# Then we fill this column by using the assignment operator to place time points in
+deseq_samples$time_point <- time_values
+
+# let's take a look:
+View(deseq_samples)
+
+# Now let's add another column for replicate
+deseq_samples$replicate <- replicate_values
+
+# let's take a look:
+View(deseq_samples)
+
+# Again note the "meta" nature of row and col names
+
+```
+# Nice we just created an index for DESEQ2 to figure out which sample is which!
+The dataframe "deseq_samples" will now be used as required input into DESEQ2
+DESEQ2 requires a paramater 'colData'  and we will point this to "deseq_samples"
+
+So we now have all our sample information and just need to learn one more factor:
+factor
+# Let's factor timepoint and replicate for differential expression analysis
+You can think of a "factor" as a way of putting a meta tag on data. 
+It's actually required for DESEQ to do analysis only on data that has been factored!
+We want to analyze time and replicates (OR MAYBE JUST TIME).
+
+So let's make time point a factored column in deseq_samples
+
+# 3) Factoring columns
+```{R facotring timepoint column}
+
+deseq_samples$time_point <- factor(deseq_samples$time_point)
+deseq_samples$replicate <- factor(deseq_samples$replicate)
+
+```
+
+# Nice let's save our work
+```{r}
+
+save(deseq_samples, file = "results/deseq_samples.RData")
+
+```
+# Note 
+We could have resaved and rewrote count_files.RData
+That's not a great idea as something could have changed from the original 
+file during this session. So it is best saved in the file where the code makes the object.
+
+

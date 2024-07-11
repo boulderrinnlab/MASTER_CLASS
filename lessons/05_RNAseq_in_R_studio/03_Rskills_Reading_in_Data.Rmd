@@ -14,9 +14,15 @@ knitr::opts_chunk$set(echo = TRUE)
 # Goal to get our essential files in order to run deseq2!
 # Oh and to learn some basic R skills towards our goals!
 The input to DESEQ2 is going to want "counts" these came from the program
-Salmon. Basically, the number of reads over a gene. We also need to consider which 
+Salmon from the NF_CORE pipeline output. 
+
+# Refresher of where is my data is here:
+00_Where_is_R_data.Rmd
+
+Salmon calculates the number of reads over a gene. We also need to consider which 
 version of the gene we want. Genes come in different "isoforms" which have extra or less bits
 of RNA added to them. These annotations are a lot of work and difficult, but Salmon makes this easier!
+
 
 # More on salmon transcript quants, this is a basic outline of how Salmon works 
 Especially if you wanted to use it outside NF_CORE pipeline for RNAseq

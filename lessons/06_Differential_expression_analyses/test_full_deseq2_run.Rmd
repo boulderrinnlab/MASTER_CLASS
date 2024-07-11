@@ -1,0 +1,88 @@
+---
+title: "test_full_run_6"
+author: "JR"
+date: "2024-07-09"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DESeq2)
+library(tibble)
+library(tidyr)
+library(magrittr)
+
+```
+
+# Counts table
+```{r}
+
+counts_matrix <- read_tsv("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", col_names = TRUE)
+
+# remove gene name
+counts_matrix <-counts_matrix[, -2] 
+View(counts_matrix)
+
+counts_matrix <- rownames_to_column(counts_matrix, "gene_id")
+
+
+##### ALternative
+
+counts <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv",  header = TRUE, row.names = 1, sep = "\t", quote = "", comment.char = "")
+
+counts <-counts[, -1] 
+
+```
+
+# Sample Sheet
+
+```{r}
+
+deseq_samples <- data.frame(
+  sample_id = colnames(counts_matrix))
+
+split_values <- strsplit(deseq_samples$sample_id, "_")
+
+time_values <- sapply(split_values, function(x) x[[2]])
+deseq_samples$time_point <- time_values
+
+replicate_values <- sapply(split_values, function(x) x[[3]])
+deseq_samples$replicate <- replicate_values
+
+
+```
+
+# Factor
+```{r}
+
+deseq_samples$time_point <- factor(deseq_samples$time_point)
+deseq_samples$replicate <- factor(deseq_samples$replicate)
+
+
+```
+
+#DESEQ2
+```{r}
+
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                              colData = deseq_samples,
+                              design = ~ time_point)
+
+# Checking for NAs !
+if (anyNA(counts_matrix)) {
+  print("There is at least one NA value in the matrix.")
+}
+
+# remove NA
+count_matrix_clean <- counts_matrix[! is.na(rowSums(counts_matrix)), ]
+
+count_matrix_clean_integer <- as.integer(count_matrix_clean)
+
+dds <- DESeqDataSetFromMatrix(countData = count_matrix_clean,
+                              colData = deseq_samples,
+                              design = ~ time_point)
+
+```
+

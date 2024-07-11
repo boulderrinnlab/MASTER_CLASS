@@ -22,6 +22,14 @@ So all we need for DESEQ2 is input counts and colData. We already got our counts
 
 load("results/count_files.RData", verbose = T)
 
+#IMPORTANT Raw counts file
+counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+
+# Remove gene name column
+counts_matrix <-counts_matrix[, -1] 
+View(counts_matrix)
+
+
 ```
 
 
@@ -55,7 +63,7 @@ Note we used the sample_id to keep track of the original naming
 This helps with reproducibility for tracking names acorss code.
 Let's keep using this practice and get more sample info from sample_id
 
-# 2) Learning Rfuncitons to retreive name info
+# 2) Learning Rfuncitons & indexing to retreive name info
 ```{R colData file for DESEQ2}
 # Now we are going to learn another key function "sapply()"
 # This is essentially a built in for loop to go over all rows and perform the same function.
@@ -90,6 +98,8 @@ View(deseq_samples)
 The dataframe "deseq_samples" will now be used as required input into DESEQ2
 DESEQ2 requires a paramater 'colData'  and we will point this to "deseq_samples"
 
+
+# TIME TO FACTOR columns (IMPORTANT for DESEQ2)
 So we now have all our sample information and just need to learn one more factor:
 factor
 # Let's factor timepoint and replicate for differential expression analysis
@@ -110,7 +120,7 @@ deseq_samples$replicate <- factor(deseq_samples$replicate)
 # Nice let's save our work
 ```{r}
 
-save(deseq_samples, file = "results/deseq_samples.RData")
+save(deseq_samples, counts_matrix, file = "results/deseq_samples.RData")
 
 ```
 # Note 

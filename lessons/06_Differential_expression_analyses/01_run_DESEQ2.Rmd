@@ -23,6 +23,7 @@ library(DESeq2)
 ```
 
 # Goal to run DESEQ2 and get familiar with results
+# Please note that we need to organize our new directory with "analysis, figures and results directories"
 Using DESEQ2 we will determine which genes change in RNA expression levels
 at different times of dox exposure. Let's officially start doing some analysis!
 
@@ -36,8 +37,15 @@ https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DES
 ```{r loading in counts and sample info}
 
 # /scratch/Shares/rinnclass/MASTER_CLASS/lessons/05_RNAseq_in_R_studio/results
-load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
 load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
+
+# NOte the write over for counts matrix and ordering of loading these two objects
+load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
+
+counts_matrix <- (counts_matrix[,-1])
+
+counts_matrix <- as.integer(counts_matrix)
+
 
 ```
 
@@ -57,7 +65,7 @@ dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
 
 ```{r run DEseqDataSetFromMatrix }
 
-dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
+dds <- DESeqDataSetFromMatrix(countData = counts_matrix,
                               colData = deseq_samples,
                               design = ~ time_point)
 ```

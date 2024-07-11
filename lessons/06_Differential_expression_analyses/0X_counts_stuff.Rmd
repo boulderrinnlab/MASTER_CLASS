@@ -1,0 +1,92 @@
+---
+title: "0X_counts_stuff"
+author: "JR"
+date: "2024-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Note that there is only one value for each gene but we had three replicates?
+That is becuase when we use results() function we get the mean across replicates 
+if we want all the values we need to use counts
+```{r}
+# First let's see what are column names are for each replicate:
+colnames(counts(mouse_long_dox_dds, normalized = FALSE))
+# They all start with WT_0
+
+# cool now we can grep all the 0 timepoint values using "^WT_0_"
+counts_0 <- counts(mouse_long_dox_dds, normalized = TRUE)[, grep("^WT_0_", colnames(counts(mouse_long_dox_dds, normalized = TRUE)))]
+
+# Let's grab the counts for 12 hour time point as well
+counts_12 <- counts(mouse_long_dox_dds, normalized = TRUE)[, grep("^WT_12_", colnames(counts(mouse_long_dox_dds, normalized = TRUE)))]
+
+# Nice now we have an object of each replicate for 0 hour counts and 
+res_counts <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
+significant_genes_counts <- res_counts[res_counts$padj < 0.05, ]
+
+# we see NAs let's get rid of them
+res_counts <- res_counts[!(is.na)(res_counts$padj), ]
+
+significant_genes_counts <- res_counts[res_counts$padj < 0.05, ]
+
+
+
+plotMA(res, main = "MA Plot: 0 vs 12 hours", ylim = c(-5, 5))
+points(significant_genes$baseMean, significant_genes$log2FoldChange, col = "red")
+
+# Cool this gave us fold change versus expression level or MA plot
+# This is a standard first plot and as usual the more expressed
+# the less the fold change
+```
+
+# Now let's plot the standard deviation across replicates between 0 and 12 hours
+```{r}
+# we are going to subset using %in% the signifcant genes from the counts object with all three replicates.
+counts_0_sig <- counts_0[rownames(significant_genes_counts) %in% rownames(counts_0), ]
+
+# Same for 12 hours
+counts_12_sig <- counts_12[rownames(significant_genes_counts) %in% rownames(counts_12), ]
+
+```
+
+# NOw we are going to calcualte the mean and standard deviation across replicates
+```{r}
+# mean
+mean_0 <- apply(counts_0_sig, 1, mean)
+
+# standard error
+se_0 <- apply(counts_0_sig, 1, function(x) sd(x)/sqrt(length(x)))
+
+# same for 12 hour counts
+mean_12 <- apply(counts_12_sig, 1, mean)
+
+# standar error 12 hours
+se_12 <- apply(counts_12_sig, 1, function(x) sd(x)/sqrt(length(x)))
+```
+
+# Now plotting 
+again we will go into this more just to see our results for now
+
+```{r}
+# Plot 0 vs 12 hours with error bars
+library(ggplot2)
+
+df <- data.frame(
+  gene = rownames(significant_genes_counts),
+  time_point = c(rep("0", length(mean_0)), rep("12", length(mean_12))),
+  mean = c(mean_0, mean_12),
+  se = c(se_0, se_12)
+)
+
+ggplot(df, aes(x = time_point, y = mean)) +
+  geom_point(aes(color = gene), position = position_dodge(0.1)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se, color = gene), position = position_dodge(0.1)) +
+  theme_classic() +
+  labs(x = "Time Point", y = "Normalized Counts")
+
+
+```
+
+

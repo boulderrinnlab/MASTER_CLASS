@@ -84,7 +84,15 @@ res_0_df <- rownames_to_column(res_0_df, "gene_id")
 # We can notice that there are NAs in the padj column let's see how many with is.na() function
 ```{r checking NAs}
 
+# counting NAs
 sum(is.na(res_0_df$padj))
+
+# How many genes in DF
+nrow(res_0_df)
+
+# what percentage
+sum(is.na(res_0_df$padj)) / nrow(res_0_df)
+
 # Yikes half our genes have NA for padj - let's deal with that later 
 # In the meantime is.na is really important way to check your data 
 # for character values that maybe intermingled with numeric - a problem
@@ -99,9 +107,15 @@ We made a g2s and this is where it comes in handy !
 
 res_0_df <- merge(res_0_df, g2s, by = c("gene_id" = "gene_id"))
 
+# Or we could use left join or join 
+res_0_df <- left_join(res_0_df, g2s)
+
+# Let's orgnaize this so the gene name is next to gene_id
+res_0_df <- res_0_df[, c(1, 9, 2:8)]
+
 # cool now we can actually start to do some analysis for the 
 #  0 vs 12 hour time point.
-# We see about 700 genes that are significantly differential between 0 and 12 hours !
+
 ```
 
 # Now let's practice filtering this data frame on padj adn lfcSE
@@ -114,12 +128,15 @@ This is a good opportunity to learn some tidyverse with the pipe
 filtered_res_0_df <- res_0_df %>%
   filter(padj < 0.05)
 
+nrow(filtered_res_0_df)
 # cool now we see 720 genes with padj < 0.05
 
 # let's filter on both padj and log2FoldChange
 # these arguments are simply added by a , and could have even more !
 filtered_res_0_df_2 <- res_0_df %>%
   filter(padj < 0.05, abs(log2FoldChange) > 1)
+
+nrow(filtered_res_0_df_2)
 
 # Interesting this is now only 42 genes !! 
 # That is a special number :)
@@ -205,20 +222,6 @@ ggplot(filtered_res_96_df_2, aes(x = log2FoldChange, y = -log10(padj))) +
 # determining overlap
 ```{r}
 overlap_genes <- intersect(cool_genes_96, cool_genes_12)
-```
 
-
-
-
-```{r}
-
-res <- results(mouse_long_dox_dds, 
-               alpha = 0.05, 
-               lfcThreshold = 1, 
-               altHypothesis = "greaterAbs")
-
-
-res_df <- as.data.frame(res)
-
-
+overlap_genes <- cool_genes_12 %in% cool_genes_96
 ```

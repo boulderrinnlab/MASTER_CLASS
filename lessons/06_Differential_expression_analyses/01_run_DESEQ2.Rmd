@@ -42,11 +42,6 @@ load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
 # NOte the write over for counts matrix and ordering of loading these two objects
 load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
 
-counts_matrix <- (counts_matrix[,-1])
-
-counts_matrix <- as.integer(counts_matrix)
-
-
 ```
 
 # (1) first run DESeq2 by creating a dds (DESEQ Data Structure) 
@@ -65,7 +60,7 @@ dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
 
 ```{r run DEseqDataSetFromMatrix }
 
-dds <- DESeqDataSetFromMatrix(countData = counts_matrix,
+dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
                               colData = deseq_samples,
                               design = ~ time_point)
 ```

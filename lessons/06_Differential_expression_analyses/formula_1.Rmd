@@ -1,0 +1,399 @@
+---
+title: "formula_1"
+author: "JR"
+date: "2024-07-12"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+library(Rcpp)
+library(DESeq2)
+```
+
+# First things first: let's get the RNAseq counts for all the genes in our GTF input file to the RNAseq pipeline.
+The counts we want are called "salmon.merged.gene_counts.tsv" they are in your NF_CORE pipeline output directory:
+......./pipeline_output/star_salmon/
+
+# IMPORTANT NOTE: this input counts table is DEPENDENT on the pipeline run
+Connect pipeline info in documentation of NF_CORE OUTPUT directory:
+
+/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/
+
+
+# Loading counts matrix and rounding into integer mode
+```{r}
+
+counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+View(counts_matrix)
+
+```
+
+
+
+# Goal: Universal analysis piepeline for project LincXpress
+
+
+Loading counts matrix raw input from Salmon (see pipeline documentation)
+```{r loading counts objects}
+
+#IMPORTANT Raw counts file
+counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+
+# Round counts to integer mode required for DESEQ2
+counts_integer <- round(counts_matrix)
+View(counts_matrix)
+View(counts_integer)
+
+
+
+```
+
+# 1 IMPORTANT : CREATE Gene name to gene id conversion table.
+This will archive all genes in the starting analysis 
+# Note this would only change upon a different genome annotation as input into NF_CORE RNAseq pipeline
+```{r}
+
+g2s <- data.frame(
+  gene_id = rownames(counts_matrix),
+  gene_name = counts_matrix[, 1]
+)
+
+view(g2s)
+
+#TODO save file
+
+# Remove gene name column for future use in DESEQ2
+counts_matrix <-counts_matrix[, -1] 
+```
+
+# Let's use our counts table to make the colData for DESEQ2 
+We will make a dataframe that has sample_id, timepoint and replicate
+
+# 1) Create a sample information dataframe
+```{R colData file for DESEQ2}
+# First we will create a dataframe from counts matrix that includes all the column names
+# To do this we call the data.frame() function and inside make col called sample_id
+# that is equal to the names of the columns in count matrix (e.g., WT_0_1)
+deseq_samples <- data.frame(
+  sample_id = colnames(counts_matrix))
+
+# let's take a look
+View(deseq_samples)
+
+# There is good information in each sample_id and we can use code to seperate out.
+# First we will make an object called "split_values" to split sample_id by any underscore
+# Note we are indexing into deseq_samples using '$' to denote index $column_name
+# Note we use the function strsplit() to go into sample_id col and splitat " _ "
+split_values <- strsplit(deseq_samples$sample_id, "_")
+
+# Let's take a look 
+View(split_values)
+```
+
+# We just created a new dataframe to input our samples into DESEQ2
+Note we used the sample_id to keep track of the original naming
+This helps with reproducibility for tracking names acorss code.
+Let's keep using this practice and get more sample info from sample_id
+
+# 2) Getimg more metadata for sample sheet
+```{R colData file for DESEQ2}
+# So here we will go through each row of split_values and run a "generic function(x)" 
+# We will then retain the second item which is the time point value in sample_id
+time_values <- sapply(split_values, function(x) x[[2]])
+
+# Similar to above we are using sapply to grab the third fragment in split_values (replicate value)
+replicate_values <- sapply(split_values, function(x) x[[3]])
+
+# Adding replicate and time point into samplesheet for DESEQ2
+deseq_samples$time_point <- time_values
+
+# Now let's add another column for replicate
+deseq_samples$replicate <- replicate_values
+
+# let's take a look:
+View(deseq_samples)
+# Again note the "meta" nature of row and col names
+
+```
+# Nice we just created an index for DESEQ2 to figure out which sample is which!
+The dataframe "deseq_samples" will now be used as required input into DESEQ2
+DESEQ2 requires a paramater 'colData'  and we will point this to "deseq_samples"
+which we just made above.
+
+# IMPORTANT : TIME TO FACTOR columns (IMPORTANT for DESEQ2)
+So we now have all our sample information and just need to learn one more factor:
+factor
+
+# Let's factor timepoint and replicate for differential expression analysis
+It's required for DESEQ to do analysis only on data that has been factored!
+We want to analyze time and replicates (OR MAYBE JUST TIME).
+
+So let's make time point and replicate factored columns in object deseq_samples
+
+# 3) Factoring columns timepoint and replicate
+```{R facotring timepoint column}
+
+deseq_samples$time_point <- factor(deseq_samples$time_point)
+deseq_samples$replicate <- factor(deseq_samples$replicate)
+
+```
+
+# Nice, this file is important to archive - let's save our work
+```{r}
+
+save(deseq_samples, counts_matrix, counts_integer, g2s, file = "lncswitch_results/deseq_samples.RData")
+
+```
+# Note 
+We could have resaved and rewrote count_files.RData
+That's not a great idea as something could have changed from the original 
+file during this session. So it is best saved in the file where the code makes the object.
+
+
+# 4) Running DESEQ2
+
+#Important Before running make sure col and row names are correct
+```{r}
+
+deseq_samples <- column_to_rownames(deseq_samples)
+# Check ordering
+  stopifnot(all(colnames(counts_integer) == rownames(deseq_samples)))
+
+
+
+  stopifnot(all(rownames(wt_overexp_long_vszero_counts) == genes$gene_id))
+  
+  
+  #TODO implement this 
+```
+
+```{r}
+#TODO repeat for all other statistical models - with nomeclature according to the model in object/file name(s)
+
+dds_time_point <- DESeqDataSetFromMatrix(countData = counts_integer,
+                              colData = deseq_samples,
+                              design = ~ time_point + replicate)
+
+dds_time_point <- DESeq(dds_time_point)
+
+# TODO LRT from Firre paper
+
+
+```
+
+# 5) Curating all results into data frame
+
+```{r}
+
+resultsNames(dds_time_point)
+
+result_names <- resultsNames(dds_time_point)
+
+results_names <- result_names[-1]
+view(results_names)
+
+res_df <- data.frame("gene_id" = character(), 
+                     "baseMean" = numeric(), 
+                     "log2FoldChange" = numeric(), 
+                     "lfcSE" = numeric(),
+                     "stat" = numeric(),
+                     "pvalue" = numeric(),
+                     "padj" = numeric(),
+                     "gene_name" = character(),
+                     "result_name" = character())
+
+
+
+
+# For loop to get all results per time point  
+
+for(i in 1:length(results_names)) {
+  results_name <- results_names[i]
+  res <- results(dds_time_point, name = results_name)
+  tmp_res_df <- res %>% as.data.frame() %>%
+    rownames_to_column("gene_id") %>%
+    merge(g2s) %>%
+    mutate(result_name = results_name)
+  res_df <- bind_rows(res_df, tmp_res_df)
+  
+}
+  # Checking NAs
+  sum(is.na(res_df$padj))
+  NoNA <- complete.cases(res_df)
+
+  #TODO clean out NAs?
+
+
+```
+
+## THINKING POINT ##
+Look through the resulting : res_df object
+Note that each row is a time_point - so all time point statistical tests are kept track of.
+column: result_name
+```{r}
+
+view(res_df)
+
+# result_name
+
+```
+
+
+# 6 Filter significant genes in any of the timepoints
+There is a lot of wiggle room and options of thresholds to choose from
+```{r}
+
+# TODO test a few and let's see
+# TODO naming important here
+
+# Log2 fold change > .58 and P < 0.05
+filtered_res_df <- res_df %>%
+  filter(padj < 0.05, abs(log2FoldChange) > .58)
+
+# Counting unique genes
+sig_genes <- unique(filtered_res_df$gene_id)
+# TODO NOTE number of genes and overlap between thresholds
+
+filtered_res_df_2 <- res_df %>%
+  filter(padj < 0.05, abs(log2FoldChange) > 1)
+# 1,605
+
+filtered_res_df_2 <- res_df %>%
+  filter(padj < 0.01, abs(log2FoldChange) > 2)
+
+as.data.frame(filtered_res_df_2)
+print(filtered_res_df_2$gene_name)
+
+sig_genes_2 <- unique(filtered_res_df_2$gene_id)
+# 669
+
+# TODO test overlaps
+```
+
+# VOLCANO PLOT SIG GENES
+```{r}
+# TODO do we need to do this?
+# rlog_var_genes_all <- rlog_counts_matrix[rowVars(rlog_counts_matrix) > 1,]
+
+# Filter to sig Genes
+as.data.frame(filtered_res_df)
+ggplot(filtered_res_df, aes(x = log2FoldChange, y = -log10(padj))) + 
+  geom_point() 
+
+# Filter to sig_2 Genes
+as.data.frame(filtered_res_df_2)
+ggplot(filtered_res_df_2, aes(x = log2FoldChange, y = -log10(padj))) + 
+  geom_point() 
+
+# Volcano
+ggplot(filtered_res_df, aes(x = log2FoldChange, y = -log10(padj))) + 
+  geom_point() 
+
+
+filtered_res_df_2 <- as.data.frame(filtered_res_df_2$gene_name)
+write_csv(filtered_res_df_2, "results/sig_genes.csv")
+```
+
+# ? NOT SURE WHAT IS BEST counts or rlog counts for heatmap etc
+# 7 Create Rlog counts (normalizing the counts)
+# IMPORTANT FOR FIGURE MAKING BELOW
+
+# Heatmap from counts_matrix (need to do the same for rlog?)
+# THIS RUNS
+
+# IMPORTANT :  Scale counts before heatmap
+```{r}
+# row center the counts -- we need to flip the matrix
+# we can only scale cols so we need to transmute (t)
+# then turn it back with (t)
+
+counts_matrix <- counts_matrix[, -1]
+scaled_counts <- t(scale(t(counts_matrix))) %>%
+  as.matrix()
+
+sum(is.na(scaled_counts))
+
+#TODO discuss NAs influence
+# TODO at least taking out as different object scaled_counts
+scaled_counts <- scaled_counts[complete.cases(scaled_counts), ]
+
+# TODO note the clustering seems off ?? Time points are not clustered well
+
+```
+
+# PRint heatmap(s)
+```{r}
+# make heat map of all genes
+pheatmap(scaled_counts, show_rownames = FALSE)
+
+# Intersect to sig gene counts only
+sig_counts <- scaled_counts %in% filtered_res_df
+
+sig_counts_matrix <- counts_matrix[filtered_res_df$gene_id, ]
+
+sig_counts_scaled <- t(scale(t(sig_counts_matrix))) %>%
+  as.matrix()
+
+sum(is.na(sig_counts_scaled))
+
+pheatmap(sig_counts_scaled, show_rownames = FALSE)
+
+# TODO NOTE again the clustering of samples is weird
+```
+
+
+
+# Same with Rlog counts?
+
+```{R}
+# TODO test below of rlog on dds_time_point
+# (3) Normalize counts (rlog)
+# This basically is rank counts normalized to std error in replicates.
+rlog_counts <- rlog(dds_time_point, blind = TRUE)
+
+# (4) now we retrieve the values using the "assay" function that converts to rlog_counts)
+rlog_counts_matrix <- assay(rlog_counts)
+
+#TODO write out? if so need results folder
+# write_rds(rlog_counts_matrix, "results/rlog_counts.rds")
+
+```
+
+# Heatmap of all samples (Rlog Counts)
+
+
+# 7) Genes that always go up or go down
+# TPM?
+```{r}
+#TODO do we use TPM here?
+
+# TODO filter these out that are increaseing across all timepoints and decreaseing 
+# TODO or increase and then stay up 
+
+# TODO Line plot
+
+
+```
+
+
+# ULTIMATE GOAL : WHAT ARE THE BEST GENES REGULATED?
+
+```{r}
+
+
+# TODO Go gene hunting for the best candidates.
+# TODO individual gene line plots (x = time , y= TPM?)
+```
+

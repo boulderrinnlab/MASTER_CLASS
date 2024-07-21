@@ -38,6 +38,8 @@ view(g2s)
 # remove gene_name column
 
 counts_matrix <- counts_matrix[,-1]
+#also
+counts_matrix <- counts_matrix[,-counts_matrix$gene_name]
 
 # Round counts to integer mode required for DESEQ2
 counts_integer <- round(counts_matrix)
@@ -117,6 +119,8 @@ view(res_df)
 
 # 6 FOR-LOOP: for-loop to put the values for each time point analysis
 ```{r}
+
+#TODO step throuhg this - make a function?
 # Let's figure out each step - for loops are common practice so let's get to know them
 
 for(i in 1:length(results_names)) {
@@ -130,9 +134,19 @@ for(i in 1:length(results_names)) {
   res_df <- bind_rows(res_df, tmp_res_df)
   
 }
+```
+# Result: we now have all our deseq2 results in res_df object !
+# Take a look and start to explore 
 
-  # Checking NAs
+
+# It is always good prectice to check on NAs that can confound data type (charachter vs integer etc)
+
+```{r}
+# Checking NAs
   sum(is.na(res_df$padj))
+  
+  # If we do want to clear them out:
+  # NoNA <- complete.cases(res_df)
 
 ```
 

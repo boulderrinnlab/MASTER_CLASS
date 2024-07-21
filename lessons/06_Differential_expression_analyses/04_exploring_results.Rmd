@@ -1,0 +1,200 @@
+---
+title: "04_exploring_results"
+author: "JR"
+date: "2024-07-15"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+library(Rcpp)
+library(DESeq2)
+```
+
+# GOAL : Let's explore our results data frame using the time point analysis from DESEQ2
+We now have results after all that hardwork - let's see what we see and start to explore !
+
+# Loading our results from DESEQ for all time points
+```{r}
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/time_point_res_df.RData")
+```
+
+
+# First let's filter to find genes that significantly changed across time points
+For this we will use the filter function in baseR
+
+
+```{r filter time point to padj < 0.05}
+
+filtered_res_df <- res_df %>%
+  filter(padj < 0.05)
+
+# Wow we can see a major reduction in our dataframe
+
+```
+
+# Now let's see what happens when we filter for fold change across time as well 
+```{r}
+
+filtered_res_df_2 <- filtered_res_df %>%
+  filter(padj < 0.05, abs(log2FoldChange) > 1)
+
+```
+
+# How many unique genes does this represent?
+```{r}
+
+sig_genes <- unique(filtered_res_df_2$gene_id)
+
+```
+# Result (again keeping track of good results)
+# Result: There are 669 unique genes that change across time (padj < 0.05 log2 > 1)
+
+# Which gene has the lowest padj?
+```{r}
+
+lowest_pval <- min(filtered_res_df_2$padj)
+# or
+
+lowest_pval <- filtered_res_df_2$padj %>%
+  min()
+
+# Let's grab the whole row instead of just the value (note need to use which.min)
+lowest_pval <- filtered_res_df_2[which.min(filtered_res_df_2$padj),]
+
+# Cool what is this gen what does it do?
+# go google for the gene name !
+```
+
+# Which gene has the largest fold change across any time point?
+```{r}
+
+max_value <- filtered_res_df_2$log2FoldChange %>% 
+  max()
+
+# Let's get the whole row to get gene name etc.
+max_row <- filtered_res_df_2[which.max(filtered_res_df_2$log2FoldChange),]
+
+# Nice what is this gene? When did it go up this much 
+```
+
+# Lets do gene pathway analysis on the significant genes affected by dox across time
+```{r}
+# printing out the gene_symbol column 
+dox_genes <- cat(paste(filtered_res_df_2$gene_name, collapse = "\n"))
+
+# as data frame:
+dox_genes <- as.data.frame(filtered_res_df_2$gene_name, collapse = "\n")
+# Let's make sure to only get the unique names
+dox_genes <- unique(dox_genes)
+
+# Renaming the column (handy code that is used a lot :)
+dox_genes <- dox_genes %>% 
+  rename(gene_name = `filtered_res_df_2$gene_name`)
+
+# Now let's write this out and do gene enrichment analysis
+write.table(dox_genes["gene_name"], row.names = FALSE, col.names = FALSE, "results/gene_names.csv")
+
+# copy and paste into EnrichR 
+#https://maayanlab.cloud/Enrichr/
+
+```
+
+# let's take a look at base mean distribution of our sig genes
+# Let's learn the hist function
+```{r}
+
+hist(filtered_res_df_2$baseMean)
+
+# Let's change the X-axis
+hist(filtered_res_df_2$baseMean, xlim = c(0,1000), breaks = 1000)
+
+# Let's do the same for Pvalue
+hist(filtered_res_df_2$padj)
+
+# Fold change
+hist(filtered_res_df_2$log2FoldChange, xlim = c(-5, 5), breaks = 1000)
+
+# How does this compare to Lfsce
+hist(filtered_res_df_2$lfcSE)
+
+
+```
+
+# Now let's make some comparisons between our significant genes and all other genes
+
+```{r}
+
+# Let's see the median basemean expression of all genes
+basemean_all_genes <- median(res_df$baseMean)
+
+# Let's do the same for our sign genes 
+basemena_sig_genes <- median(filtered_res_df_2$baseMean)
+
+# Ok looks a lot higher basemean for our sign genes.
+# Let's do a t-test to see if this is signficant :
+
+?t.test
+t.test(res_df$baseMean, filtered_res_df_2$baseMean)
+
+# Cool it's a significant result :) !
+
+```
+# Result: The dox response genes have a higher basemean than all genes
+# Result: P = 0.4, FC = (33/0.2)
+
+
+Everything is looking good so a common next step is to 
+make a counts table of just significant genes. We can do this
+by taking the entire counts table and intersecting it with only 
+the gene_names or gene_ids in our dox gene list. This is also known
+as indexing and something we will do A LOT of :)
+
+# Retrieving counts data for each time point only for dox genes
+```{r}
+
+# First we need to load our counts matrix
+counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+
+# Let's make sure our counts file is the right format
+view(counts_matrix)
+
+# Ok so we see gene_name and gene_id are same in both filtered_res_df_2 and counts_matrix
+# Let's intersect these two tables !
+
+counts_dox_genes <- counts_matrix[filtered_res_df_2$gene_id,]
+
+# Isn't that handy we can index into the counts matrix and get 
+# the rows that match filtered_res_df_2$gene_id and all the columns
+
+
+```
+# Result now we have a counts table for heatmps of just sig genes
+
+
+########## exeRcise ############
+# 1) Determine if any of these properties are significantly different
+# Between the dox genes and all genes:
+
+1) padj 
+2) lfcSE
+3) log2foldChange
+
+# 2 Make a results data frame of genes that are P < 0.01 & that change greater that 4 fold (up or down)
+Then retreive all the counts from all the replicates for these genes
+########## exeRcise ############
+
+
+
+

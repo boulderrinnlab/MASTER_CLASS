@@ -1,0 +1,196 @@
+---
+title: "05_TPM_Transcripts_per_million"
+author: "JR"
+date: "2024-07-19"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+library(Rcpp)
+library(DESeq2)
+```
+
+
+# Goal to do some analysis with TPM values.
+We used the counts output from Salmon in the previous classes to do
+differential expression and other analysis.
+
+Now we are going to use Transcripts Per Million reads. These are normalized abundance
+values of each gene. We can think of this as "how much" of a gene there is.
+TPM will be our input for some plots and statistical tests as well.
+
+# Let's load our TPM file from our NF_CORE RNAseq pipeline output
+```{r}
+
+# reading in table TPM
+
+TPM <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/data/results/star_salmon/salmon.merged.gene_tpm.tsv", header=TRUE, row.names=1)
+
+# Ok so we can see that we are missing our gene_names but have a TPM value for each gene across each timepoint
+
+```
+
+# Let's see how many genes are never expressed
+```{r}
+
+# We are going to do this by indexing into TPM and grabbing all rows that add up to 0
+TPM_zero <- TPM[rowSums(TPM == 0) == ncol(TPM), ]
+# Wow so almost half of the genes measured had no expression
+
+# now let's remove these from our TPM table 
+# first lets move the gene_id into a column to cross compare
+TPM <- rownames_to_column(TPM, "gene_id")
+TPM_zero <- rownames_to_column(TPM_zero, "gene_id")
+
+# Now we can remove these from TPM
+TPM_not_zero <- TPM[!(TPM$gene_id %in% TPM_zero$gene_id), ]
+
+
+```
+
+# Let's find the gene with the highest starting abundance
+```{r}
+
+#first the distribution of TPM
+hist(TPM_not_zero$WT_0_R1, xlim = c(0,300), breaks = 1000)
+
+# weird we still see a lot of 0 values. let's filter our TPM object differently
+# Moving gene_id column back to rownames
+row.names(TPM) <- TPM$gene_id
+# now removing the actual gene_id col
+TPM$gene_id <- NULL
+
+TPM_filtered <- TPM[rowSums(TPM) > 1, ]
+
+# Let's check 
+any(rowSums(TPM_filtered) < 1)
+
+# For a positive control
+any(rowSums(TPM) < 1)
+# Cool look like we are filtered to any row that adds up to at leat 1 tpm
+```
+
+# Ok now let's figure out what an average TPM value is
+```{r}
+
+# First let's take the aveargae across the row
+row_means <- rowMeans(TPM_filtered)
+
+mean(row_means)
+
+# Cool so an average TPM value is about 45
+hist(row_means, xlim = c(0,100), breaks = 1000)
+
+```
+
+
+# Now let's see where the mean is less than 1
+```{r}
+
+length(rowMeans(TPM_filtered)[rowMeans(TPM_filtered) < 1])
+
+# Yikes about a quarter of our data has an average TPM of < 1
+# We could think of filtering those out too
+```
+
+# Now let's make a TPM file that records the average TPM per time point
+# First let's see how to get the average value for the time point
+```{r}
+
+# First establish time point and replicate cols
+time_points <- c("0", "12", "24", "48", "96")
+replicates <- c("_R1", "_R2", "_R3")
+
+average_values <- list()
+
+for (tp in time_points) {
+  # Subset the columns for the current time point and replicates
+  cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
+  
+  # Calculate the mean of the replicates
+  avg <- colMeans(TPM_filtered[, cols])
+  
+  # Add the result to the list
+  average_values <- c(average_values, list(avg))
+}
+
+
+# Let's double check this
+mean(TPM_filtered$WT_12_R1)
+
+
+```
+
+
+```{r}
+for (tp in time_points) {
+  # Subset the columns for the current time point and replicates
+  cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
+  
+  # Calculate the mean of the replicates for each row
+  avg <- rowMeans(TPM_filtered[, cols])
+  
+  # Add the result to the list
+  average_values <- c(average_values, list(avg))
+}
+
+# Convert the list to a data frame
+average_values <- do.call(cbind, average_values)
+
+# Add column names for the time points
+colnames(average_values) <- time_points
+
+# convert back to data.frame
+avrg_TPM <- as.data.frame(average_values)
+```
+
+
+```{r}
+install.packages("matrixStats")
+library(matrixStats)
+
+?rowSds
+# Initialize empty lists to store the results
+average_values <- list()
+stddev_values <- list()
+
+
+# Loop through each time point
+average_and_stddev_values <- list()
+for (tp in time_points) {
+  # Subset the columns for the current time point and replicates
+  cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
+  
+  # Calculate the mean and standard deviation of the replicates for each row
+  avg <- rowMeans(TPM_filtered[, cols])
+  std_dev <- apply(TPM_filtered[, cols], 1, sd)
+  
+  # Convert std_dev to a data frame
+  std_dev <- data.frame(std_dev)
+  
+  # Combine avg and std_dev into one data frame
+  combined <- cbind(avg, std_dev)
+  
+  # Add the result to the list
+  average_and_stddev_values <- c(average_and_stddev_values, list(combined))
+}
+
+# Convert the list to a data frame
+average_and_stddev_values <- do.call(cbind, average_and_stddev_values)
+
+# Add column names for the time points
+colnames(average_and_stddev_values) <- paste0(rep(time_points, each = 2), c("_avg", "_sd"))
+```

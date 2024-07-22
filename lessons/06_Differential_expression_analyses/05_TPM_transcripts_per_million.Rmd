@@ -26,53 +26,79 @@ library(DESeq2)
 
 # Goal to do some analysis with TPM values.
 We used the counts output from Salmon in the previous classes to do
-differential expression and other analysis.
+differential expression and other analysis. All while starting to expand our R skills !
 
 Now we are going to use Transcripts Per Million reads. These are normalized abundance
 values of each gene. We can think of this as "how much" of a gene there is.
 TPM will be our input for some plots and statistical tests as well.
 
-# Let's load our TPM file from our NF_CORE RNAseq pipeline output
-```{r}
+# I couldn't explain it better or more simply than this site:
+https://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
+
+# Let's get started and load our TPM file from our NF_CORE RNAseq pipeline output
+```{r reading in TPM}
 
 # reading in table TPM
-
 TPM <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/data/results/star_salmon/salmon.merged.gene_tpm.tsv", header=TRUE, row.names=1)
 
-# Ok so we can see that we are missing our gene_names but have a TPM value for each gene across each timepoint
+view(TPM)
+# Ok so we can see that we are missing our gene_names but have gene_id and a TPM value for each gene across each timepoint
+# NOTE: rownames are gene_id
 
 ```
 
 # Let's see how many genes are never expressed
-```{r}
+```{r removing 0 value data}
 
 # We are going to do this by indexing into TPM and grabbing all rows that add up to 0
 TPM_zero <- TPM[rowSums(TPM == 0) == ncol(TPM), ]
+view(TPM_zero)
 # Wow so almost half of the genes measured had no expression
 
 # now let's remove these from our TPM table 
-# first lets move the gene_id into a column to cross compare
+# There are numerous ways to do this, here is one !
+
+# first lets move the gene_id into a column to cross compare between TPM and TPM_zero
+view(TPM)
 TPM <- rownames_to_column(TPM, "gene_id")
+view(TPM)
+# same for TPM_zero
 TPM_zero <- rownames_to_column(TPM_zero, "gene_id")
 
-# Now we can remove these from TPM
+# Now we can remove these from TPM using the Tidyverse %in% 'function'
 TPM_not_zero <- TPM[!(TPM$gene_id %in% TPM_zero$gene_id), ]
-
+view(TPM_not_zero)
 
 ```
+# Note:
+if you filter by 0's as we did the starting number of genes is much higher.
+This can matter in later statistical analysis when you have actually made more 
+observations than your down stream analyses. This is important for some statistical principles.
+Just remember you can always go back to the original TPM file we loaded to know how many observations 
+were originally made.
 
-# Let's find the gene with the highest starting abundance
-```{r}
+# Let's start to get a feel for TPM data by seing what their values are like !
+```{r Distibution of TPM values }
 
 #first the distribution of TPM
 hist(TPM_not_zero$WT_0_R1, xlim = c(0,300), breaks = 1000)
+# weird we still see a lot of small values (e.g., 0.2314). let's filter our TPM object differently
 
-# weird we still see a lot of 0 values. let's filter our TPM object differently
+# First some cleaning up
 # Moving gene_id column back to rownames
+view(TPM)
 row.names(TPM) <- TPM$gene_id
+view(TPM)
+
 # now removing the actual gene_id col
 TPM$gene_id <- NULL
+view(TPM)
 
+# last clean up to move rownames back 
+TPM <- column_to_rownames(TPM, "gene_id")
+view(TPM)
+
+# Let's filter to a row that adds up to at least 1
 TPM_filtered <- TPM[rowSums(TPM) > 1, ]
 
 # Let's check 
@@ -81,61 +107,79 @@ any(rowSums(TPM_filtered) < 1)
 # For a positive control
 any(rowSums(TPM) < 1)
 # Cool look like we are filtered to any row that adds up to at leat 1 tpm
+
+# Let's see if that histogram changed?
+hist(TPM_filtered$WT_0_R1, xlim = c(0,300), breaks = 1000)
+
+# Lets compare means 
+mean(TPM_filtered$WT_0_R1)
+
+# Now our non filtered mean
+mean(TPM_not_zero$WT_0_R1)
 ```
+# Result: we see that in one sample the average is about 30-45 TPM
+That is for only one time point and replicate.
+# Result: when we filtered on row sum > 1 TPM this mean shifts to 45 TPM
 
-# Ok now let's figure out what an average TPM value is
-```{r}
 
+# Let's get to know TPM data a little better by looking across all samples
+We can do this with rowMeans which is like row sum, but will get the mean value of a row
+
+```{r average TPM across all samples}
 # First let's take the aveargae across the row
 row_means <- rowMeans(TPM_filtered)
 
+# Look at the mean
 mean(row_means)
+# Cool so an average TPM value is about 45 across all samples
+# Not just the one we time point we looked at above.
 
-# Cool so an average TPM value is about 45
+# What about the standard deviation?
+sd(row_means)
+
+# WOW that is a lot of standard deviation !
+
+# Now let's look at the distribution of the average TPM for each gene.
 hist(row_means, xlim = c(0,100), breaks = 1000)
 
 ```
+# Result: We can see that the mean TPM is 45 but SD is 310 !
+# Result: most are less than 20 though !
+#Note: 
+Any time you get a data set it's good to look at the distribution of values.
+This will also help suggest statistical tests depending on the distribution type.
+In short, always check the mean and SD as a first check on things !
 
+# Now let's find out how many genes have a low TPM average
+```{r how many genes have mean TPM of less than one}
 
-# Now let's see where the mean is less than 1
-```{r}
-
+# This is a nested set of code to mix rowMeans with indexing.
+# what is the 'length' of mean row in TPM_filtered and then index for < 1
 length(rowMeans(TPM_filtered)[rowMeans(TPM_filtered) < 1])
 
-# Yikes about a quarter of our data has an average TPM of < 1
+# Yikes about a quarter of our data has an average TPM vlaue of < 1
 # We could think of filtering those out too
 ```
+# Result: 8,333 genes have an average of TPM 1 across all samples.
+This might seem confusing since we filtered for a row sum greater than one.
+But a gene could be .1 TPM across 12 samples and the row would sum to greater than one.
+Thus, we have 8K+ cases where expression is super low in all samples.
 
-# Now let's make a TPM file that records the average TPM per time point
-# First let's see how to get the average value for the time point
-```{r}
+# Thought exercise how can I get the average TPM for each time point?
+You have three columns for each timepoint and 5 time points.
+
+# Now let's see how to get the average value for a given time point for each gene
+Let's use this as an opportunity to explore for loops more too :)
+
+# For looping to find average TPM
+```{r for loop to find average TPM for }
+
 
 # First establish time point and replicate cols
 time_points <- c("0", "12", "24", "48", "96")
 replicates <- c("_R1", "_R2", "_R3")
 
-average_values <- list()
-
-for (tp in time_points) {
-  # Subset the columns for the current time point and replicates
-  cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
-  
-  # Calculate the mean of the replicates
-  avg <- colMeans(TPM_filtered[, cols])
-  
-  # Add the result to the list
-  average_values <- c(average_values, list(avg))
-}
-
-
-# Let's double check this
-mean(TPM_filtered$WT_12_R1)
-
-
-```
-
-
-```{r}
+X_average_values <- list()
 for (tp in time_points) {
   # Subset the columns for the current time point and replicates
   cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
@@ -144,20 +188,31 @@ for (tp in time_points) {
   avg <- rowMeans(TPM_filtered[, cols])
   
   # Add the result to the list
-  average_values <- c(average_values, list(avg))
+  X_average_values <- c(X_average_values, list(avg))
 }
 
 # Convert the list to a data frame
-average_values <- do.call(cbind, average_values)
+X_average_values <- do.call(cbind, X_average_values)
 
 # Add column names for the time points
-colnames(average_values) <- time_points
+colnames(X_average_values) <- time_points
 
 # convert back to data.frame
-avrg_TPM <- as.data.frame(average_values)
+avrg_TPM <- as.data.frame(X_average_values)
+
+# Since we have converted this anyways 
 ```
+# Nice we have a dataframe with the average TPM for each timepoint for each gene!
+# Note:
+This can also be done with the function 'lapply' which is essentially a forloop maker.
+We will use this later -- just to note 'lapply' is commonly used instead of forloops (faster too)
+
+# >>>> next we will combine all our previous lessons succinctly for an RNAseq analysis pipeline (workflow)
 
 
+###### ExeRcise #######
+What about standard deviation of TPM values across replicates and time points for each gen???
+# Let's revisist our previous forloop and now do it for avg and sd in one table.
 ```{r}
 install.packages("matrixStats")
 library(matrixStats)
@@ -170,6 +225,8 @@ stddev_values <- list()
 
 # Loop through each time point
 average_and_stddev_values <- list()
+
+# now each object into the for loop is "tp"
 for (tp in time_points) {
   # Subset the columns for the current time point and replicates
   cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))

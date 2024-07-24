@@ -47,6 +47,7 @@ counts_matrix <- counts_matrix[ , -1]
 counts_integer <- round(counts_matrix)
 
 ```
+
 # Creating sample sheet for deseq (coldata) from counts file
 ```{r creating deseq sample sheet (coldata)}
 # setting up data frame with cols from counts matrix
@@ -141,7 +142,6 @@ load("results/counts_results_DESEQ/DESEQ_results.rdata")
 # As a final step let's archive the average and standard deviation of our TPM values
 After this last step we will have all the info we need for plotting in lv 7 !
 
-
 # Import TPM file from Salmon
 ```{r import counts and TPM from Salmon}
 # laoding and preparing TPM file from Salmon
@@ -155,7 +155,6 @@ any(rowSums(TPM_filtered) < 1)
 any(rowSums(TPM) < 1)
 
 ```
-
 
 # Calculating mean and sd for each gene in each time point (replicate mean and sd)
 ```{r making table of mean and sd TPM value for each gene}
@@ -193,4 +192,5 @@ save(TPM, average_and_stddev_values, TPM_filtered, g2s, deseq_samples, file = "/
 # test
 load("results/TPM_results/TPM_results.Rdata")
 ```
-# VERY NICE we have all our results organized and can start to make figures - less than 200 lines to do a lot of work !
+# VERY NICE we have all our results organized and can start to make figures
+# WE ARE READY FOR LEVEL 7 - Congrats on finishing Level 6 !!

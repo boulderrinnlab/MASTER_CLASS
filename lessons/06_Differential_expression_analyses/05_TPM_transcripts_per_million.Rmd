@@ -166,14 +166,15 @@ But a gene could be .1 TPM across 12 samples and the row would sum to greater th
 Thus, we have 8K+ cases where expression is super low in all samples.
 
 # Thought exercise how can I get the average TPM for each time point?
-You have three columns for each timepoint and 5 time points.
+You have three columns for each timepoint and 5 time points. So we need a way 
+to specify what we are looking for. This can be done by the function 'grep'. you
+can think of it as find and replace. In summary we can find the columns for the timepoints
+for each gene and calculate mean and standard deviaiton (sd) and so on ...
 
 # Now let's see how to get the average value for a given time point for each gene
 Let's use this as an opportunity to explore for loops more too :)
 
-# For looping to find average TPM
 ```{r for loop to find average TPM for }
-
 
 # First establish time point and replicate cols
 time_points <- c("0", "12", "24", "48", "96")
@@ -207,18 +208,24 @@ avrg_TPM <- as.data.frame(X_average_values)
 This can also be done with the function 'lapply' which is essentially a forloop maker.
 We will use this later -- just to note 'lapply' is commonly used instead of forloops (faster too)
 
-# >>>> next we will combine all our previous lessons succinctly for an RNAseq analysis pipeline (workflow)
 
+# What about standard deviation (sd)? This is critical information when considering abundance measurements.
+Let's use the same logic as above and do this for both sd and mean TPM for all genes in TPM filtered
 
-###### ExeRcise #######
-What about standard deviation of TPM values across replicates and time points for each gen???
-# Let's revisist our previous forloop and now do it for avg and sd in one table.
-```{r}
+```{r for loop to find average TPM value and sd for each gene at each time point}
+
+# To get the standard deviation we need this package.
 install.packages("matrixStats")
 library(matrixStats)
 
+
+# Let's establish our time points and replicates there in:
+# First establish time point and replicate cols
+time_points <- c("0", "12", "24", "48", "96")
+replicates <- c("_R1", "_R2", "_R3")
+
 ?rowSds
-# Initialize empty lists to store the results
+# Initialize empty lists to store the results from the for loop
 average_values <- list()
 stddev_values <- list()
 
@@ -250,4 +257,15 @@ average_and_stddev_values <- do.call(cbind, average_and_stddev_values)
 
 # Add column names for the time points
 colnames(average_and_stddev_values) <- paste0(rep(time_points, each = 2), c("_avg", "_sd"))
+
+# Voila
+view(average_and_stddev_values)
 ```
+# Nice we have a table with average and sd for TPM values we can use for Plotting and making figures !
+# >>>> next we will combine all our previous lessons succinctly for an RNAseq analysis pipeline (workflow)
+
+############### ExeRcise ##################
+
+# 1) Double check that the averages and sd are correct by comaping TPM and average_and_standard_deviation .....
+# 2) can you do the average and standard deviation using lapply? If so please share !
+

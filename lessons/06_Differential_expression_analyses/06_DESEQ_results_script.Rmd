@@ -115,15 +115,34 @@ for(i in 1:length(results_names)) {
 ```
 
 # Filtering to significant results P <0.05 and LFC abs(1)
-```{r}
+```{r filtering DESEQ results to LFC > abs(1)& P <0.05}
 
-filtered_res_df_2 <- filtered_res_df %>%
+filtered_res_df <- res_df %>%
   filter(padj < 0.05, abs(log2FoldChange) > 1)
+
+unique_sig_genes <- unique(filtered_res_df$gene_id)
 ```
 
+# Nice only 100 lines of code to go from counts table to DESEQ results !
+Now your future self can go from raw sequencing files to NF_CORE pipeline to DESEQ analysis.
+That should be pretty handy if you ever do RNAseq in the future.
+
+# NOW LET'S SAVE ALL OUR WORK FOR MAKING FIGURES !
+Since all this data is from counts, let's make a results directory
+in our results directory :) called 'count_results_DESEQ'
+
+```{r saving DESEQ results}
+
+save(unique_sig_genes, counts_integer, g2s, res_df, filtered_res_df, deseq_samples, file = "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
+
+load("results/counts_results_DESEQ/DESEQ_results.rdata")
+```
+
+# As a final step let's archive the average and standard deviation of our TPM values
+After this last step we will have all the info we need for plotting in lv 7 !
 
 
-
+# Import TPM file from Salmon
 ```{r import counts and TPM from Salmon}
 # laoding and preparing TPM file from Salmon
 
@@ -138,3 +157,40 @@ any(rowSums(TPM) < 1)
 ```
 
 
+# Calculating mean and sd for each gene in each time point (replicate mean and sd)
+```{r making table of mean and sd TPM value for each gene}
+install.packages("matrixStats")
+library(matrixStats)
+
+# Time and replicate values
+time_points <- c("0", "12", "24", "48", "96")
+replicates <- c("_R1", "_R2", "_R3")
+
+# initialize list for results
+average_and_stddev_values <- list()
+# now each object into the for loop is "tp"
+for (tp in time_points) {
+  cols <- grep(paste0("WT_", tp, "_R"), colnames(TPM_filtered))
+  avg <- rowMeans(TPM_filtered[, cols])
+  std_dev <- apply(TPM_filtered[, cols], 1, sd)
+  std_dev <- data.frame(std_dev)
+  combined <- cbind(avg, std_dev)
+  average_and_stddev_values <- c(average_and_stddev_values, list(combined))
+}
+# Convert the list to a data frame
+average_and_stddev_values <- do.call(cbind, average_and_stddev_values)
+# Add column names for the time points
+colnames(average_and_stddev_values) <- paste0(rep(time_points, each = 2), c("_avg", "_sd"))
+```
+
+# Now let's save our TPM results as a seperate object
+```{r saving TPM data}
+
+# note I am adding in some other files we just saved, this is in case
+# we just want to open up TPM data we still have G2s and Samplesheet.
+save(TPM, average_and_stddev_values, TPM_filtered, g2s, deseq_samples, file = "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/TPM_results/TPM_results.Rdata" )
+
+# test
+load("results/TPM_results/TPM_results.Rdata")
+```
+# VERY NICE we have all our results organized and can start to make figures - less than 200 lines to do a lot of work !

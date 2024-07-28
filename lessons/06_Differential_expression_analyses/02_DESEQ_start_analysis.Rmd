@@ -20,13 +20,13 @@ BiocManager::install("apeglm")
 
 ```
 
-```{r}
+```{r loading data}
 load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
 load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
 ```
 
 # Long mouse dox time course DDS
-```{r}
+```{r run DESEQ2}
 # create DDS
 mouse_long_dox_dds <- DESeqDataSetFromMatrix(countData = counts_filtered,
                                                  colData = deseq_samples,
@@ -38,7 +38,7 @@ mouse_long_dox_dds <- DESeq(mouse_long_dox_dds)
 ```
 
 # Let's look at the results
-```{r}
+```{r result names from DESEQ2}
 
 resultsNames(mouse_long_dox_dds)
 
@@ -59,6 +59,7 @@ But first let's get down to some fundamental analyses.
 # Antoher reason why factoring our DESEQsamples file is importnat
 
 res_0 <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
+view(res_0)
 
 # IMPORTANT: "time_point" here is the factored column and would be different
 # if you called this column differently in your sample file (deseq_samples)
@@ -71,14 +72,16 @@ res_0 <- results(mouse_long_dox_dds, contrast = c("time_point", "12", "0"))
 
 
 # res_0 is an S4 object and abit confusing let's turn into a data frame:
-```{r}
+```{r making a dataframe of our results}
 res_0_df <- data.frame(time = 12, res_0)
+view(res_0_df)
 
 # That is a bit better - as a dataframe
 # But out gene_id is still in the "meta" 
 # lets move it into a column with rownames_to_column
 
 res_0_df <- rownames_to_column(res_0_df, "gene_id")
+view(res_0_df)
 ```
 
 # We can notice that there are NAs in the padj column let's see how many with is.na() function
@@ -106,13 +109,13 @@ We made a g2s and this is where it comes in handy !
 # we need to merge g2s and res_0_df with a column that exists in both DFs = gene_id
 
 res_0_df <- merge(res_0_df, g2s, by = c("gene_id" = "gene_id"))
-
+view(res_0_df)
 # Or we could use left join or join 
 res_0_df <- left_join(res_0_df, g2s)
-
+view(res_0_df)
 # Let's orgnaize this so the gene name is next to gene_id
 res_0_df <- res_0_df[, c(1, 9, 2:8)]
-
+view(res_0_df)
 # cool now we can actually start to do some analysis for the 
 #  0 vs 12 hour time point.
 
@@ -121,7 +124,7 @@ res_0_df <- res_0_df[, c(1, 9, 2:8)]
 # Now let's practice filtering this data frame on padj adn lfcSE
 This is a good opportunity to learn some tidyverse with the pipe
 %>% function
-```{r}
+```{r filtering our results to significant Padj < 0.05}
 
 # filter() function for padj
 # note that %>% pushes data to next function (filter in this case)
@@ -147,7 +150,7 @@ nrow(filtered_res_0_df_2)
 # Let's use res_0_df_2
 
 We can extract the gene names and then do gene ontology
-```{r}
+```{r extracting sig genes at P <0.05 and LFC > abs(1)}
 
 # printing out the gene_symbol column 
 cool_genes <- cat(paste(filtered_res_0_df_2$gene_symbol, collapse = "\n"))
@@ -166,7 +169,7 @@ We will dive much deeper into plotting as we go, but for now a standard first pl
 is a volcano plot. Let's make one !
 
 # volcano plot of genes significant at 12 hours
-```{r}
+```{r for fun making a volcano plot}
 
 library(ggplot2)
 

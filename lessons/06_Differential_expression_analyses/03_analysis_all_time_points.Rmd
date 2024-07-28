@@ -22,7 +22,7 @@ counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_R
 # 1 IMPORTANT : CREATE Gene name to gene id conversion table.
 This will archive all genes in the starting analysis 
 # Note this would only change upon a different genome annotation as input into NF_CORE RNAseq pipeline
-```{r}
+```{r creating g2s file from counts matrix}
 
 # Note making data frame from index other files
 g2s <- data.frame(
@@ -34,12 +34,13 @@ view(g2s)
 ```
 
 # 2 Now that g2s is made let's clean up our counts matrix
-```{r}
+```{r removing gene_name column and rounding counts to integers}
 # remove gene_name column
 
 counts_matrix <- counts_matrix[,-1]
 #also
-counts_matrix <- counts_matrix[,-counts_matrix$gene_name]
+counts_matrix <- counts_matrix %>%
+  select(-gene_name)
 
 # Round counts to integer mode required for DESEQ2
 counts_integer <- round(counts_matrix)
@@ -49,7 +50,7 @@ View(counts_integer)
 ```
 
 # Loading Deseq_sample_sheet
-```{r}
+```{r loading in sample sheet for DESEQ2}
 load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
 
 # oops that loaded a count matrix that isn't in integer -let's fix that
@@ -66,7 +67,7 @@ deseq_samples$replicate <- factor(deseq_samples$replicate)
 ```
 
 # 4) Make sure rows and columns are ordered for analysis
-```{r}
+```{r checking that sample sheet and counts match rows and cols respectively}
 
 
 # Check ordering
@@ -78,7 +79,7 @@ deseq_samples$replicate <- factor(deseq_samples$replicate)
 
 
 # 4) Run Deseq Model (time_point)
-```{r}
+```{r run DESEQ2}
 
 dds_time_point <- DESeqDataSetFromMatrix(countData = counts_integer,
                               colData = deseq_samples,
@@ -92,7 +93,7 @@ dds_time_point <- DESeq(dds_time_point)
 First we are going to make a datframe structure to store the results
 # Note this is a common strategy before a for-loop : make file to populate
 
-```{r}
+```{r viewing results and making a data frame to compile all results from each time}
 
 # Let's find the names of the results we want
 result_names <- resultsNames(dds_time_point)
@@ -118,22 +119,32 @@ view(res_df)
 ```
 
 # 6 FOR-LOOP: for-loop to put the values for each time point analysis
-```{r}
+```{r Learning for-loops to compile all results from all time points}
 
-#TODO step throuhg this - make a function?
 # Let's figure out each step - for loops are common practice so let's get to know them
 
 for(i in 1:length(results_names)) {
+  # grabbing the result name for i in for loop - will repeat for all result names
   results_name <- results_names[i]
+  # grabbing the results using DESEQ2 results function for time point i
   res <- results(dds_time_point, name = results_name)
+  # creating a temporary results data frame in the for loop memory
   tmp_res_df <- res %>% 
+    # converting this to dataframe
     as.data.frame() %>%
+    # Moving the gene_id into a column now called gene_id
     rownames_to_column("gene_id") %>%
+    # Merge in g2s (by gene_id)
     merge(g2s) %>%
+    # Add a column to track result name for i
     mutate(result_name = results_name)
+  # This will keep adding new results (as rows) for each additional i in for loop
   res_df <- bind_rows(res_df, tmp_res_df)
   
 }
+
+# Let's take a look at what we got !
+view(res_df)
 ```
 # Result: we now have all our deseq2 results in res_df object !
 # Take a look and start to explore 
@@ -141,7 +152,7 @@ for(i in 1:length(results_names)) {
 
 # It is always good prectice to check on NAs that can confound data type (charachter vs integer etc)
 
-```{r}
+```{r checking NAs}
 # Checking NAs
   sum(is.na(res_df$padj))
   
@@ -151,7 +162,7 @@ for(i in 1:length(results_names)) {
 ```
 
 # saving results in res_df
-```{r}
+```{r saving our results data frame}
 save(res_df, file = "results/time_point_res_df.RData")
 ```
 
@@ -160,9 +171,12 @@ The key information we have is column:
 Basemean: a measure of how much the gene was expressed
 Log2FoldChange: how much the gene went up or down in a given comparison of time
 Lfsce: shrunken log fold change
-# https://hbctraining.github.io/DGE_workshop/lessons/05_DGE_DESeq2_analysis2.html#:~:text=Shrunken%20log2%20foldchanges%20(LFC),High%20dispersion%20values
+
+https://hbctraining.github.io/DGE_workshop/lessons/05_DGE_DESeq2_analysis2.html#:~:text=Shrunken%20log2%20foldchanges%20(LFC),High%20dispersion%20values
+
 Pvalue
 Padj : adjusted pval (what we will be using)
+
 result_name: this allows to have the values for each time point comparison tracked
 
 ########## ExceRcise #########

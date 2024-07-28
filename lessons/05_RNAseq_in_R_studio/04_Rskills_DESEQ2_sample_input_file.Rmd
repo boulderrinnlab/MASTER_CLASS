@@ -26,9 +26,9 @@ load("results/count_files.RData", verbose = T)
 counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
 
 # Remove gene name column
-counts_matrix <-counts_matrix[, -1] 
+counts_matrix <-counts_matrix %>% 
+  select(-"gene_name") 
 View(counts_matrix)
-
 
 ```
 
@@ -45,13 +45,15 @@ A dataframe is like a excel sheet.
 deseq_samples <- data.frame(
   sample_id = colnames(counts_matrix))
 
+# NOTE: this is a quick way to change cols in to rows !
+
 # let's take a look
 View(deseq_samples)
 
-# There is good information in each sample_id and we can use code to seperate out.
+# There is good information in each sample_id and we can use code to separate out.
 # First we will make an object called "split_values" to split sample_id by any underscore
 # Note we are indexing into deseq_samples using '$' to denote index $column_name
-# Note we use the function strsplit() to go into sample_id col and splitat " _ "
+# Note we use the function strsplit() to go into sample_id col and split at " _ "
 split_values <- strsplit(deseq_samples$sample_id, "_")
 
 # Let's take a look 
@@ -110,7 +112,7 @@ We want to analyze time and replicates (OR MAYBE JUST TIME).
 So let's make time point a factored column in deseq_samples
 
 # 3) Factoring columns
-```{R facotring timepoint column}
+```{R facotring timepoint and replicate column}
 
 deseq_samples$time_point <- factor(deseq_samples$time_point)
 deseq_samples$replicate <- factor(deseq_samples$replicate)
@@ -118,7 +120,7 @@ deseq_samples$replicate <- factor(deseq_samples$replicate)
 ```
 
 # Nice let's save our work
-```{r}
+```{r saving sample sheet}
 
 save(deseq_samples, counts_matrix, file = "results/deseq_samples.RData")
 

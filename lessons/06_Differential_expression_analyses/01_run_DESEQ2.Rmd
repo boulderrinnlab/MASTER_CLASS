@@ -34,6 +34,7 @@ https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DES
 
 
 # Let's start by loading in our counts_matrix and sample info
+# IMPORTANT: careful of order when loading Rdata :)
 ```{r loading in counts and sample info}
 
 # /scratch/Shares/rinnclass/MASTER_CLASS/lessons/05_RNAseq_in_R_studio/results

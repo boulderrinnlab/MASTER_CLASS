@@ -26,7 +26,7 @@ library(DESeq2)
 We now have results after all that hardwork - let's see what we see and start to explore !
 
 # Loading our results from DESEQ for all time points
-```{r}
+```{r loading our DESEQ2 results res_df}
 load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/time_point_res_df.RData")
 ```
 
@@ -45,7 +45,7 @@ filtered_res_df <- res_df %>%
 ```
 
 # Now let's see what happens when we filter for fold change across time as well 
-```{r}
+```{r filtering Padj < 0.05 and LFC abs(1)}
 
 filtered_res_df_2 <- filtered_res_df %>%
   filter(padj < 0.05, abs(log2FoldChange) > 1)
@@ -53,16 +53,16 @@ filtered_res_df_2 <- filtered_res_df %>%
 ```
 
 # How many unique genes does this represent?
-```{r}
+```{r how many unique genes are in the significant results df?}
 
 sig_genes <- unique(filtered_res_df_2$gene_id)
-
+# cool so we have 669 genes that are significantly changing in at least one time point
 ```
 # Result (again keeping track of good results)
 # Result: There are 669 unique genes that change across time (padj < 0.05 log2 > 1)
 
 # Which gene has the lowest padj?
-```{r}
+```{r exploring lowest padj}
 
 lowest_pval <- min(filtered_res_df_2$padj)
 # or
@@ -78,7 +78,7 @@ lowest_pval <- filtered_res_df_2[which.min(filtered_res_df_2$padj),]
 ```
 
 # Which gene has the largest fold change across any time point?
-```{r}
+```{r searching for maximum fold change in results}
 
 max_value <- filtered_res_df_2$log2FoldChange %>% 
   max()
@@ -90,7 +90,7 @@ max_row <- filtered_res_df_2[which.max(filtered_res_df_2$log2FoldChange),]
 ```
 
 # Lets do gene pathway analysis on the significant genes affected by dox across time
-```{r}
+```{r getting gene list as data frame and then doing ontology analysis}
 # printing out the gene_symbol column 
 dox_genes <- cat(paste(filtered_res_df_2$gene_name, collapse = "\n"))
 
@@ -113,7 +113,7 @@ write.table(dox_genes["gene_name"], row.names = FALSE, col.names = FALSE, "resul
 
 # let's take a look at base mean distribution of our sig genes
 # Let's learn the hist function
-```{r}
+```{r exploring the distribution of basemean and padj values}
 
 hist(filtered_res_df_2$baseMean)
 
@@ -134,7 +134,7 @@ hist(filtered_res_df_2$lfcSE)
 
 # Now let's make some comparisons between our significant genes and all other genes
 
-```{r}
+```{r finding median basemean values}
 
 # Let's see the median basemean expression of all genes
 basemean_all_genes <- median(res_df$baseMean)
@@ -162,7 +162,7 @@ the gene_names or gene_ids in our dox gene list. This is also known
 as indexing and something we will do A LOT of :)
 
 # Retrieving counts data for each time point only for dox genes
-```{r}
+```{r meging counts with our sig genes - so we have counts table for all sig genes}
 
 # First we need to load our counts matrix
 counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
@@ -174,7 +174,7 @@ view(counts_matrix)
 # Let's intersect these two tables !
 
 counts_dox_genes <- counts_matrix[filtered_res_df_2$gene_id,]
-
+unique(filtered_res_df_2$gene_id)
 # Isn't that handy we can index into the counts matrix and get 
 # the rows that match filtered_res_df_2$gene_id and all the columns
 

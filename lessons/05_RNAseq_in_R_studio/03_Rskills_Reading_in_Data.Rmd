@@ -73,6 +73,7 @@ To do this we will use the rownames function
 ```{r create g2s object}
 
 # Creating a dataframe with gene_id and gene_symbol
+# note creating columns with name = data
 g2s <- data.frame(gene_id = rownames(counts_matrix), gene_symbol = counts_matrix[, 1])
 
 # Let's save this using write.csv
@@ -96,7 +97,14 @@ g2s <- data.frame(
 # removing gene names by indexing rows and columns via object[ rows, columns ]
 # here we take all the rows and remove the first column with -1 ]
 counts_matrix <-counts_matrix[, -1] 
-View(counts_matrix)
+# or 
+counts_matrix <- counts_matrix[, -which(names(counts_matrix) == "gene_name")]
+# or
+counts_matrix <- counts_matrix %>% 
+  select(-gene_name)
+
+# There are many ways to do the same thing - keeping column name is safer
+# IMPORTANT: if you run the [ , -1] again it will keep removing cols
 
 # turning into a matrix using as.matrix() function
 counts_matrix <- as.matrix(counts_matrix) 

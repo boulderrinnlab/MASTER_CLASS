@@ -156,9 +156,9 @@ In short, always check the mean and SD as a first check on things !
 # This is a nested set of code to mix rowMeans with indexing.
 # what is the 'length' of mean row in TPM_filtered and then index for < 1
 length(rowMeans(TPM_filtered)[rowMeans(TPM_filtered) < 1])
-
 # Yikes about a quarter of our data has an average TPM vlaue of < 1
 # We could think of filtering those out too
+
 ```
 # Result: 8,333 genes have an average of TPM 1 across all samples.
 This might seem confusing since we filtered for a row sum greater than one.
@@ -174,7 +174,7 @@ for each gene and calculate mean and standard deviaiton (sd) and so on ...
 # Now let's see how to get the average value for a given time point for each gene
 Let's use this as an opportunity to explore for loops more too :)
 
-```{r for loop to find average TPM for }
+```{r for loop to find average TPM for each time point }
 
 # First establish time point and replicate cols
 time_points <- c("0", "12", "24", "48", "96")
@@ -201,7 +201,8 @@ colnames(X_average_values) <- time_points
 # convert back to data.frame
 avrg_TPM <- as.data.frame(X_average_values)
 
-# Since we have converted this anyways 
+# Let's take a look
+view(avrg_TPM)
 ```
 # Nice we have a dataframe with the average TPM for each timepoint for each gene!
 # Note:
@@ -226,13 +227,9 @@ replicates <- c("_R1", "_R2", "_R3")
 
 ?rowSds
 # Initialize empty lists to store the results from the for loop
-average_values <- list()
-stddev_values <- list()
-
-
-# Loop through each time point
 average_and_stddev_values <- list()
 
+# Loop through each time point
 # now each object into the for loop is "tp"
 for (tp in time_points) {
   # Subset the columns for the current time point and replicates

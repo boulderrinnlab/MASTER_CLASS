@@ -1,0 +1,456 @@
+---
+title: "02_GGPLOT_2"
+author: "JR"
+date: "2024-08-03"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(magrittr)
+# install.packages("broom")
+library(broom)
+
+```
+
+# Alright in the last class we eneded on the GEOM layer in GGPLOT
+# To review we are up to here:
+1) Data -- data being plotted from object indexes etc.
+2) MAPPING -- mapping data (aes)
+3) Statistics -- statical analyses on mapped data
+4) scales -- how big small you want things
+5) GEOMETRIES -- what type of plots you are making (geom)
+
+# We explored density and histogram Geometries now let's look at some more !
+
+
+# Multiple Geom layers 
+The geom layer has a lot of options AND you can layer them!
+Let's take out x,y plots above and map them into a 2D density plot
+```{R geom_point() & geom_density_2d}
+
+ggplot(filtered_res_df, aes(x = baseMean, 
+                 y = padj)) +
+  geom_point()+
+  xlim(0,1000) +
+  geom_density_2d() 
+
+# This now shows us where the density of our data is !
+
+# Now let's compare log2fc and lfcse
+ggplot(filtered_res_df, aes(x = log2FoldChange, 
+                 y = lfcSE)) +
+  geom_point()+
+  xlim(-5,5) +
+  geom_density_2d() 
+
+# what would happen if we change the order?
+
+ggplot(filtered_res_df, aes(x = log2FoldChange, 
+                 y = lfcSE)) +
+  geom_density_2d() +
+  xlim(-5,5) +
+  geom_point()
+  
+
+# it's hard to see but in this case the contour is on the bottom
+#  -- subtle but important
+
+```
+# RESULT: we see a linear relationship between l2fc and lfcse
+
+
+# trend lines
+Let's add even more geom_*() layers -- starting with a 'trend line'
+```{r geom_smooth, geome_abline}
+
+# We might suspect that padj and pvalue have a linear realtionship.
+# Let's take a look:
+
+ggplot(filtered_res_df, aes(x = padj, 
+                 y = pvalue)) +
+  geom_point()
+
+# Yup seems like it - here is where trend lines come in handy !
+
+?geom_abline
+# This will make a line with a given slope and intercept
+?geom_smooth
+# This shows variance and deviations of the trend lines
+# let's add them both !
+
+ggplot(filtered_res_df, aes(x = padj, 
+                 y = pvalue)) +
+  geom_point()+
+  geom_abline(slope = 1, intercept = 0) +
+  geom_smooth(method = "lm")
+
+# Nice we see that the linear model fits well (blue)
+# Try changing the slope to identify the relationship !?
+
+```
+# RESULT: we observe a linear trend between pvalue and padj
+
+# Now let's retreive the values in these linear models
+Above we just plotted the lines on top of data. But now let's 
+get the actual values of the linear regression fits! 
+```{r linear model data}
+
+ggplot(filtered_res_df, aes(x = padj, 
+                 y = pvalue)) +
+  geom_point()+
+  geom_abline(slope = 1, intercept = 0) +
+  geom_smooth(method = "lm")
+
+# We just need to pick to variables and find the regression between them
+# To do this we use the function "lm" and assign values to it 
+
+lm_fit <- lm(filtered_res_df$padj ~ filtered_res_df$pvalue)
+
+# IMPORTANT: Summary and table are super handy functions in R
+summary(lm_fit)
+# Nice summary gave us the results of the linear fit we could add to the plot
+
+summary(filtered_res_df$baseMean)
+# WOW super handy - let's look more :) !
+summary(filtered_res_df$padj)
+```
+
+# Digging deeper on trend lines and plotting values !
+```{r obtaining and plotting trend lines with broom }
+
+# ORDER MATTERS: 
+# Here is what we did above:
+lm_fit <- lm(filtered_res_df$padj ~ filtered_res_df$pvalue)
+summary(lm_fit)
+
+# Now let's swap the values and see what happens 
+lm_fit_2 <- lm(filtered_res_df$pvalue ~ filtered_res_df$padj)
+summary(lm_fit_2)
+
+# Ok make sure to think through the order !
+
+# let's convert the lm_fit data to a data_frame using tidy()
+# it's in the library broom:
+library(broom)
+lm_df <- tidy(lm_fit)
+lm_df
+# so much easier to read than summary :)
+
+model <- lm(filtered_res_df$padj ~ filtered_res_df$pvalue)
+summary(model)
+# plotting with the actual lm fit:
+
+ggplot(filtered_res_df, aes(x = padj, y = pvalue)) +
+  geom_point() +
+  geom_abline(slope = 1/(lm_df$estimate[[2]]))
+
+# See how this changes if order is changed
+
+#TODO clean this up !
+
+
+
+
+
+```
+
+
+
+# More GEOM(_) layers : Bar plots
+Let's take a quick look at bar plots 
+we provide the x-axis and ggplot counts for Y.
+We will also use this opportunity to look at level 3) STAT layer
+```{r geom_bar()}
+# let's plot the number of each type of DBD in our set of DBPs 
+
+ggplot(filtered_res_df, aes(x = result_name)) + 
+  geom_bar()
+# Nice, we see that GGPLOT automatically made the y-axis the values in result_name
+# We observe that the most changes occured at 48 hours
+
+# If the we want to provide the Y-axis for a specific DBP
+# we need to apply stat = identity in the geom_bar()
+# basically this allows you to command the y-axis
+
+ggplot(filtered_res_df, aes(
+      x = result_name,
+      y = baseMean)) +
+        geom_bar(stat = "identity")
+
+# Interesting what are those y-values :) ?
+# Guessing they are the sum of the baseMean in each time_point
+# Let's test and find out :
+ 
+sum_basemean <- filtered_res_df %>%
+  filter(result_name == "time_point_12_vs_0") %>%
+  summarise(sum_basemean = sum(baseMean))
+# YUP, so because we set Y-axis to basemean it took the sum of all basemeans !
+```
+# RESULT: base mean is also highest at 48 hours
+# RESULT: most genes change at 48 hours
+# RESULT: the basemean is much lower for the genes that change at 96 hours
+
+# Now let's add some bells and whistles to our bar plot!
+```{r geom_bar()}
+ggplot(filtered_res_df, aes(x = result_name, 
+                 y = baseMean
+                )) +
+  geom_point() +
+  stat_summary(fun = "mean",
+               color = "red",
+               shape = 1,
+               size = 2)
+```
+
+# Summary of where we are at
+Now we have gone through these layers:
+1) Data -- data being plotted from object indexes etc.
+2) MAPPING -- mapping data (aes)
+3) Statistics -- statistical analyses on mapped data
+4) Scales
+5) Geom
+
+# Let's revisit scales (layer 4) and facets (layer 6) briefly before moving on
+
+4) scales -- how big small you want things
+Scales is important for outputting specific factors as colors that are "scaled"
+
+```{r more on scale layer}
+# Let's see how we can use the scales layer to change axes more than just limits
+
+ggplot(filtered_res_df, aes(x = pvalue, 
+                            y =padj, color = padj < 0.01)) +
+  geom_point()+
+  scale_x_continuous() +
+  scale_color_brewer(palette = "Set1") 
+
+# scale_x_continious (same for y) is calling the scale layer specifically
+# We are giving it where to put values on X-axis      
+```
+
+# changes axes limits
+What if we want to set the limits of the axes? 
+We can use 'xlim' & 'ylim' in scale layer.
+
+```{R xlim and ylim}
+
+ggplot(filtered_res_df, aes(x = pvalue, 
+                            y =padj, color = padj < 0.0025)) +
+  geom_point()+
+  scale_x_continuous() +
+  xlim(0, 0.01) +
+  ylim(0, 0.01) +
+  scale_color_brewer(palette =  "Set1") 
+# coool so we zoomed in on the bottom left of the plot
+
+```
+
+# FACETS
+This will allow us to make multiple plots in the same plot frame or facet
+One limitation is that it can only make the same plots from different data
+
+Be careful in the facet layer that you don't make too many plots. 
+Essentially we make as many figures as there are entries.
+
+# FACET_GRID & FACET_WRAP
+```{r facet_grid(), facet_wrap()}
+
+# Now let's pick a few genes of interest to plot.
+genes <- c("Gm13698", "Gm13691", "Gm9045", "Pgk1-rs7")
+gene_values <- filtered_res_df %>%
+  filter(gene_name %in% genes)
+
+# Now the plotting beings
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_grid(gene_name ~ .) + 
+  geom_point()
+
+# So facet grid makes each gene a row 
+# Compare to facet wrap - looks better :)
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_wrap(gene_name ~ .) + 
+  geom_point()
+# facet wrap allows rows and columns in 
+
+```
+
+We can also facet grid another parameter -- let's say time_point
+
+```{R two facets}
+
+# let's facet by gene and time point 
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_wrap(gene_name ~ result_name) + 
+  geom_point()
+
+# Nice that worked and now we have a single data point in each plot :)
+# This maybe a good example for facet grid:
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_grid(gene_name ~ result_name) + 
+  geom_point()
+
+# NICE !
+
+```
+
+# DEEPER INTO FACET: we can add some parameters to order the plots
+```{R deeper into facets}
+
+# We can set the rows and cols in facet wrap
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_wrap(gene_name ~ ., nrow = 2, ncol = 3) + 
+  geom_point()
+
+# Note the axis are all the same for each plot -- let's use 'scales = free' parameter
+ggplot(gene_values, 
+       aes(x = log2FoldChange, y = padj )) +
+  facet_wrap(gene_name ~ ., nrow = 2, ncol = 3) + 
+  geom_point()
+
+```
+
+# Coordinate layer
+How to represent X and Y coordinates in different coordinate systems.
+This is unlikely to really be used in biological data but an important layer!
+We have been using Cartesian and it is the most common "coordinate" system.
+But you can also plot data in "polar" and other coordinate systems.
+We can just add it in the "Coordinates layer"
+
+# To complete this layer let's just take a peak at "polar" coordinate space
+```{r coordinate layer}
+
+# let's make the coordinates polar instead of cartesian
+ggplot(filtered_res_df, aes(x = result_name)) +
+  geom_bar() +
+  coord_polar()
+
+# the values eminate from the center and are a "bar_plot" from the center.
+# we can easily see as we did above that 24 and 48 hours had biggest change
+
+# We can play around in the coordinate space too. 
+# For example to tell what is  the "theta" or circular dimension. 
+
+ggplot(filtered_res_df) +
+  geom_bar(aes(x = result_name)) +
+  coord_polar(theta = 'y')
+
+# This helps us see that 12 and 96 had least amount of change
+```
+
+# Theme layer
+This is a great way to package all the features you want, colors,
+backgrounds, grid lines etc. We tend to use paper white as a defualt theme.
+
+We made a defualt theme that we can source at the begining of the
+document call _setup.R. Once loaded a "paper white" theme will be available.
+
+Here is an example of a 'theme' is called in ggPlot
+
+```{r themes}
+
+ggplot(big_num_peaks_df, aes(x = num_peaks)) +
+  geom_density(alpha = 0.2, color = "#424242", fill = "#424242") +
+  theme_paperwhite() +
+  xlab(expression("Number of peaks")) +
+  ylab(expression("Density")) +
+  ggtitle("Promoter binding events",
+          subtitle = "mRNA and lncRNA genes")
+
+# Note this example build everything from labels to data presentation!
+
+# Let's take a look at _setup.R
+# Nice, it basically calls a "function" in ggplot
+# You can change this as you please by going through each line (hint: google)
+```
+
+# more themes
+There are a number of built-in themes in addition to 
+the one we've provided. You can see them by typing theme_ 
+then autocomplete and check a few out! Here is cleavland :
+
+```{r more themes}
+
+ggplot(big_num_peaks_df, aes(x = num_peaks)) +
+  geom_density() +
+  theme_cleveland()
+
+# we can load our custom theme paper_white
+ggplot(big_num_peaks_df, aes(x = num_peaks)) +
+  geom_density() +
+  theme_paperwhite()
+
+
+```
+
+
+
+
+
+
+
+# extra on linear models
+
+```{r}
+library(broom)
+# We can get the slope and intercept from making a lm variable:
+
+lm_fit <- lm(big_num_peaks_df$total_peak_length ~ big_num_peaks_df$num_peaks)
+summary(lm_fit)
+# slope = 1,000 
+# ORDER MATTERS: if reversed the slope is 8 e -3!
+lm_fit <- lm(big_num_peaks_df$num_peaks ~ big_num_peaks_df$total_peak_length)
+summary(lm_fit)
+
+
+# let's convert the lm_fit data to a data_frame using tidy()
+# it's in the library broom:
+library(broom)
+install.packages("broom")
+lm_df <- tidy(lm_fit)
+lm_df
+# so much easier to read than summary :)
+
+# plotting with the actual lm fit:
+
+ggplot(big_num_peaks_df, aes(x = num_peaks, y = total_peak_length)) +
+  geom_point() +
+  geom_abline(slope = lm_df$estimate[[1]], intercept = lm_df$estimate[[2]])
+
+# See how this changes if order is changed
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+peak_occurrence_df <- read_csv("/scratch/Shares/rinnclass/CLASS_2023/JR/CLASS_2023/CLASSES/06_final_going_global/analysis/05_THE_BIG_KNIT/results/peak_occurence_dataframe.csv")
+
+
+ggplot(peak_occurrence_df, aes(x = number_of_dbp)) +
+geom_density(alpha = 0.2, color = "#424242", fill = "#424242") +
+  theme_paperwhite() +
+  xlab(expression("Number of DBPs")) +
+  ylab(expression("Density")) +
+  ggtitle("Promoter binding events",
+          subtitle = "mRNA and lncRNA genes") 
+
+
+
+```

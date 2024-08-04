@@ -1,0 +1,90 @@
+---
+title: "04_Plotting_TPM"
+author: "JR"
+date: "2024-08-04"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("reshape")
+library(reshape)
+```
+
+# Goal: use TPM values to make plots of how genes change in abundance due to dox and time
+So far we have been learning to plot using the results of DESEQ2 such as pvalue, padj 
+Now we are going to take another step in plotting the abundance of each gene (TPM).
+This would be the type of plot you do after finding sig genes in DESQ2 to see the trend of 
+abundance and time. Let's use our figure skills and learn some more R and ggplot2 to measure gene expression levels.
+
+# Important: Counts are a much more accurate representation of how much an RNA was observed in a sample
+TPM compresses all those thousands of reads on each gene into one value (Transcripts per million).
+TPM is just simply saying what percentage of a given sequencing sample a given gene is.
+We also saw that almost all our data is at value TPM < 20 and std is very high -
+So take all of this with a grain of salt but is good to measure relative changes in gene across samples!
+
+# Let's start making some TPM plots !
+
+# Load data
+```{r loading our RNAseq analysis data TPM & COUNTS}
+
+# load TPM RESULTS: 
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/TPM_results/TPM_results.Rdata")
+
+# laod DESEQ2 results
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
+
+```
+
+# First let's revisit the distribution of values for TPM 
+```{r hist TPM values}
+# Previously we plotted TPM distribution from our cols labeled:
+# "WT_0_1" etc - note that is not a good idea to name a col by a number :)
+hist(average_and_stddev_values$96_avg)
+# Oh no this doesn't work because of an "integer" value being indexed
+# This can be fixed easily by :
+hist(average_and_stddev_values$'96_avg', xlim = c(0,1000), ylim = c(0,1000), breaks = 1000)
+# We can quickly see again that most values are very low and a long right tail on distribution of TPM values!
+```
+
+# Now let's do this with Ggplot and learn to melt data :) Or pivot longer
+Our goal here is to make a distribution of TPM values in each time point - using facet-wrap
+```{r facet all timepoint TPM distributions}
+
+# First let's make set of time values for faceting:
+time_values <- c("0_avg", "12_avg", "24_avg", "48_avg", "96_avg")
+
+# This can also be done with grep (smarter):
+time_points <- names(average_and_stddev_values)[grep("avg", names(average_and_stddev_values))]
+# moving rows into df so we can track gene_id
+average_and_stddev_values_2 <- rownames_to_column(average_and_stddev_values, var = "gene_id")
+
+# Melt the data frame to long format
+melt_tpm_df <- melt(average_and_stddev_values_2, measure.vars = time_points, value_name = "gene_id")
+# Cool we just made it a really long df (compare original and melt) -it's 5x longer
+
+# Now to plot:
+ggplot(melt_tpm_df, aes(x = value)) +
+  geom_histogram(bins = 50) +
+  facet_wrap(~ variable, scales = "free_x")+
+  xlim(0,1000) +
+  ylim(0,1000) +
+  theme("paperwhite")
+
+# Just for fun we can also get some of this in summary
+summary(average_and_stddev_values)
+```
+# RESULT: average TPM distributions are similar in all samples
+
+# Now let's plot one gene TPM and sd across time, let's look in df for a good one (filtered_res_df)
+```{r TPM plot of gene of interest}
+
+gene_up <- c("ENSMUSG00000112027.1")
+
+
+
+```
+
+

@@ -16,6 +16,17 @@ library(broom)
 
 ```
 
+# Load data
+```{r loading our RNAseq analysis data TPM & COUNTS}
+
+# load TPM RESULTS: 
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/TPM_results/TPM_results.Rdata")
+
+# laod DESEQ2 results
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
+
+```
+
 # Alright in the last class we eneded on the GEOM layer in GGPLOT
 # To review we are up to here:
 1) Data -- data being plotted from object indexes etc.

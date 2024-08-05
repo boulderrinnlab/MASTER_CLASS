@@ -161,8 +161,16 @@ ggplot(plot_df, aes(x = time, y = avg)) +
 genes_of_interest <- data.frame(gene = c("ENSMUSG00000094125.1", "ENSMUSG00000079247.2", "ENSMUSG00000112027.1", "ENSMUSG00000066632.3"))
 
 df_plot_genes <- TPM_filtered[rownames(TPM_filtered) %in% genes_of_interest$gene, ]
-# moving rownames in 
+# moving rownames in
 df_plot_genes <- rownames_to_column(df_plot_genes, var = "gene_id")
+
+
+# TODO start here
+
+
+
+
+
 
 df_plot_genes <- df_plot_genes %>%
   pivot_longer(cols = everything(),

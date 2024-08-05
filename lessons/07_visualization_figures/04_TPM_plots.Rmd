@@ -78,13 +78,115 @@ summary(average_and_stddev_values)
 ```
 # RESULT: average TPM distributions are similar in all samples
 
+
+# Let's grab the counts just for the filtered res_df genes.
+# Also let's make sure we have a list of unique genes!
+```{r TPM for DESEQ2 sig genes}
+
+sig_genes <- as.data.frame(unique(filtered_res_df$gene_id))
+names(sig_genes) <- "gene_id"
+
+# one way to subset the data frame of avrg / sd TPM values
+sig_gene_tpm <- inner_join(average_and_stddev_values_2, sig_genes, by = "gene_id")
+
+# Same can be done by indexing
+sig_gene_tpm_2 <- average_and_stddev_values_2[average_and_stddev_values_2$gene_id %in%
+                                                sig_genes$gene_id, ]
+
+# let's now merge in the gene names into this handy dataframe
+sig_gene_tpm <- merge(sig_gene_tpm, g2s)
+
+# Now we should organize so we can plot specific genes (not mix character and integer)
+sig_gene_tpm <- sig_gene_tpm %>%
+  select(-gene_id) 
+
+# cool now we have the tpm and sd values to plot !
+
+```
+
+
 # Now let's plot one gene TPM and sd across time, let's look in df for a good one (filtered_res_df)
 ```{r TPM plot of gene of interest}
 
-gene_up <- c("ENSMUSG00000112027.1")
+# Picking a favorite gene
+gene_up <- as.data.frame(c("Gm9045"))
+names(gene_up) <- "gene_name"
 
+# indexing to just get values for this gene
+Gm9045_tpm <- sig_gene_tpm[sig_gene_tpm$gene_name %in% gene_up$gene_name, ]
 
+# now moving the character gene_name to rownames to won't interfere with numeric values
+rownames(Gm9045_tpm) <- Gm9045_tpm$gene_name
+
+# removing text column
+Gm9045_tpm <- Gm9045_tpm %>%
+  select(-gene_name) 
+
+# Ok this is typical data wrangling now let's plot !
 
 ```
+
+# Line plot for TPM and SD across time points
+```{r plotting line plot}
+
+# We now need to futher prepare our data :)
+# Let's get a variable for col names to plot
+avg_cols <- grep("_avg", names(Gm9045_tpm), value = TRUE)
+sd_cols <- grep("_sd", names(Gm9045_tpm), value = TRUE)
+
+# This is another way to "melt" or pivot longer
+plot_df <- data.frame(
+  time = as.numeric(gsub("_avg", "", avg_cols)),
+  avg = unlist(Gm9045_tpm[avg_cols]),
+  sd = unlist(Gm9045_tpm[sd_cols])
+)
+
+# NOW THE PLOT !
+ggplot(plot_df, aes(x = time, y = avg)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = avg - sd, ymax = avg + sd), width = 0.2) +
+  theme("paperwhite") +
+  labs(x = "Time (hours)", y = "TPM Value")
+# +   theme_classic()
+
+```
+
+
+
+#TODO start here
+
+```{r}
+#TODO start here 
+
+genes_of_interest <- data.frame(gene = c("ENSMUSG00000094125.1", "ENSMUSG00000079247.2", "ENSMUSG00000112027.1", "ENSMUSG00000066632.3"))
+
+df_plot_genes <- TPM_filtered[rownames(TPM_filtered) %in% genes_of_interest$gene, ]
+# moving rownames in 
+df_plot_genes <- rownames_to_column(df_plot_genes, var = "gene_id")
+
+df_plot_genes <- df_plot_genes %>%
+  pivot_longer(cols = everything(),
+               names_to = c("condition", "time", "replicate"),
+               names_sep = "_")
+
+
+df_plot_genes$condition <- gsub("WT_", "", df_plot_genes$condition)
+df_plot_genes$condition <- as.numeric(df_plot_genes$condition)
+df_plot_genes$replicate <- as.numeric(df_plot_genes$replicate)
+
+
+library(ggplot2)
+ggplot(df_plot_genes, aes(x = condition, y = value, color = factor(replicate))) +
+  geom_line(aes(group = interaction(gene, replicate))) +
+  geom_point() +
+  labs(x = "Time (hours)", y = "TPM Value") +
+  theme_classic()
+
+```
+
+
+
+
+
 
 

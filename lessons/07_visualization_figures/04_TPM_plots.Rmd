@@ -227,9 +227,18 @@ ggplot(df_plot_genes, aes(x = Time, y = mean_TPM)) +
 
 ```
 
+########### exeRcise ################
 
+# Goal (1) : can you make the same plot of lfC from DESEQ2 results?
+Exact same logic, different starting data frame. This is a very
+common plot to show LfC across time. Let's make it happen !
 
+# Goal (2) : We should make a function !!! 
+Wouldn't it be cool to have a funciton that we can pick any 
+set of genes and make the plots we just did above ???
+Yes we can - let's attempt to bundle that code for TPM file 
+into a function !
 
-
+########### exeRcise ################
 
 

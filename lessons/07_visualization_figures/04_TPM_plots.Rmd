@@ -225,6 +225,7 @@ ggplot(df_plot_genes, aes(x = Time, y = mean_TPM)) +
   ggtitle('Average TPM across Time Points') +
   facet_wrap(~ gene_id)
 
+# This could be cleaned up by using gene_name instead -- fun exeRcise :)
 ```
 
 ########### exeRcise ################
@@ -239,6 +240,171 @@ set of genes and make the plots we just did above ???
 Yes we can - let's attempt to bundle that code for TPM file 
 into a function !
 
-########### exeRcise ################
+#####################################
+
+# Function
+```{r exeRcise make our first function !}
+
+# Alright let's make our first function !
+#Start by calling a funciton to do all things between "{}" { function }
+# We also just need to set the parameters for the funciton that need to be in env
+
+# First name function, inputs and then the funciton items - kinda like shell script
+plot_gene_expression <- function(genes_of_interest, df) {
+  # Now we are going to do all the steps inside the function {}
+  df_plot_genes <- df[rownames(df) %in% genes_of_interest, ]
+  
+  # Move rownames to a column
+  df_plot_genes <- rownames_to_column(df_plot_genes, var = "gene_id")
+  
+  # Pivot longer
+  df_plot_genes <- df_plot_genes %>%
+    pivot_longer(cols = -gene_id,
+                 names_to = 'Time_Replicate',
+                 values_to = 'TPM')
+  
+  # Separate sample name into time and replicate
+  df_plot_genes <- df_plot_genes %>%
+    separate(
+      Time_Replicate,
+      into = c('WT', 'Time', 'Replicate'),
+      sep = '_',
+      extra = "merge"
+    ) %>%
+    select(-WT)
+  
+  # Convert Time to numeric values
+  df_plot_genes$Time <- as.numeric(df_plot_genes$Time)
+  
+  # Group by Time and calculate mean and std of TPM
+  df_plot_genes <- df_plot_genes %>%
+    group_by(gene_id, Time) %>%
+    summarise(mean_TPM = mean(TPM), sd_TPM = sd(TPM))
+  
+  # Plot the line plot with error bars
+  ggplot(df_plot_genes, aes(x = Time, y = mean_TPM)) +
+    geom_line() +
+    geom_errorbar(aes(ymin = mean_TPM - sd_TPM, ymax = mean_TPM + sd_TPM), width = 0.2) +
+    labs(x = 'Time (hours)', y = 'Average TPM') +
+    ggtitle('Average TPM across Time Points') +
+    facet_wrap( ~ gene_id)
+}
+
+# Example usage:
+genes_of_interest <- c(
+  "ENSMUSG00000094125.1",
+  "ENSMUSG00000079247.2",
+  "ENSMUSG00000112027.1",
+  "ENSMUSG00000066632.3",
+  "ENSMUSG00000000031.16"
+)
+
+plot_gene_expression(genes_of_interest, TPM_filtered)
+```
+
+# Cool now we can source this function from our util !!
+Let's make an Rscript that has this function so we can use it like any other function !
+1) Go to util folder
+2) set as working directory !
+3) make new .R script file
+# Check out example util/00_our_first_function_lesson.R 
+4) source below and function runs !
+
+```{r source .R scripts }
+
+source("../../util/00_our_first_function_lesson.R")
+
+genes_of_interest <- c(
+  "ENSMUSG00000094125.1",
+  "ENSMUSG00000079247.2",
+  "ENSMUSG00000112027.1",
+  "ENSMUSG00000066632.3",
+  "ENSMUSG00000000031.16"
+)
+
+plot_gene_expression(genes_of_interest, TPM_filtered)
+
+```
+
+# LFC plot 
+Here we are going to follow a similar logic as above to intersect
+a list of genes and plot the lfc on y-axis across time on x-axis
+# Note we are using a little more succinct logic here!
+```{r lfc versus time plot}
+
+# Same as above starting with list of genes:
+genes_of_interest <- data.frame(gene = c("ENSMUSG00000094125.1", "ENSMUSG00000079247.2", "ENSMUSG00000112027.1", "ENSMUSG00000066632.3", "ENSMUSG00000000031.16"))
+
+# Reduce DESEQ2 results "res_df" to genes of interest
+df_lfc_plot <- res_df[res_df$gene_id %in% genes_of_interest$gene, ]
+
+# Remove the "time_point_" prefix and "_vs_0" suffix, then convert to numeric
+df_lfc_plot <- df_lfc_plot %>%
+  mutate(time_point = gsub("time_point_|_vs_0", "", result_name)) %>%
+  mutate(time_point = as.numeric(time_point))
+
+# Ensure the data is sorted by gene and time_point
+df_lfc_plot <- df_lfc_plot %>%
+  arrange(gene_id, time_point)
+
+# Plotting the LFC versus time
+ggplot(df_lfc_plot, aes(x = time_point, y = log2FoldChange, group = gene_id)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ gene_id, scales = "free_y") +  # Facet by gene
+  labs(title = "Log2 Fold Change Over Time",
+       x = "Time Point (hours)",
+       y = "log2 Fold Change") +
+  theme_minimal()
+
+```
+# Awesome these plots look a little better too :) 
+We don't have error bars here as each point only has one value
+from DESEQ2. But it shows the trends a little better. Super handy !!
+
+# Now let's make it a function !
+```{r create LFC plot function }
+
+LFCplot <- function(genes_of_interest, res_df) {
+  library(dplyr)
+  library(ggplot2)
+  
+  # Reduce DESEQ2 results to genes of interest
+  df_lfc_plot <- res_df[res_df$gene_id %in% genes_of_interest$gene, ]
+  
+  # Remove the "time_point_" prefix and "_vs_0" suffix, then convert to numeric
+  df_lfc_plot <- df_lfc_plot %>%
+    mutate(time_point = gsub("time_point_|_vs_0", "", result_name)) %>%
+    mutate(time_point = as.numeric(time_point))
+  
+  # Ensure the data is sorted by gene and time_point
+  df_lfc_plot <- df_lfc_plot %>%
+    arrange(gene_id, time_point)
+  
+  # Plotting the LFC versus time
+  plot <- ggplot(df_lfc_plot, aes(x = time_point, y = log2FoldChange, group = gene_id)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~ gene_id, scales = "free_y") +  # Facet by gene
+    labs(title = "Log2 Fold Change Over Time",
+         x = "Time Point (hours)",
+         y = "log2 Fold Change") +
+    theme_minimal()
+  
+  return(plot)
+}
+
+```
+# Now let's test it !
+```{r}
+
+source("../../util/00_our_first_function_lesson.R")
+
+LFCplot(genes_of_interest, res_df)
+
+```
+# AMAZING !! one function to make any gene plot !
+Have fun trying differnet gene inputs for TPM or LFC !
+
 
 

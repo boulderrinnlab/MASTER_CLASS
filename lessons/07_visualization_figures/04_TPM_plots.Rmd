@@ -9,10 +9,13 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("reshape")
+#install.packages("reshape")
 library(reshape)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(dplyr)
 ```
-
 # Goal: use TPM values to make plots of how genes change in abundance due to dox and time
 So far we have been learning to plot using the results of DESEQ2 such as pvalue, padj 
 Now we are going to take another step in plotting the abundance of each gene (TPM).
@@ -63,12 +66,25 @@ average_and_stddev_values_2 <- rownames_to_column(average_and_stddev_values, var
 
 # Melt the data frame to long format
 melt_tpm_df <- melt(average_and_stddev_values_2, measure.vars = time_points, value_name = "gene_id")
+
 # Cool we just made it a really long df (compare original and melt) -it's 5x longer
+# Note the same can be done with pivot longer
+pivot_longer_tpm_df <- average_and_stddev_values_2 %>% 
+  pivot_longer(cols = all_of(time_points), names_to = 'Time', values_to = 'TPM')
 
 # Now to plot:
 ggplot(melt_tpm_df, aes(x = value)) +
   geom_histogram(bins = 50) +
   facet_wrap(~ variable, scales = "free_x")+
+  xlim(0,1000) +
+  ylim(0,1000) +
+  theme("paperwhite")
+
+# or
+
+ggplot(pivot_longer_tpm_df, aes(x = TPM)) +
+  geom_histogram(bins = 50) +
+  facet_wrap(~ Time, scales = "free_x")+
   xlim(0,1000) +
   ylim(0,1000) +
   theme("paperwhite")
@@ -127,6 +143,10 @@ Gm9045_tpm <- Gm9045_tpm %>%
 ```
 
 # Line plot for TPM and SD across time points
+Here we are going to leverage the fact that we already calculated
+the mean and sd TPM values for all genes. So we will plot from that file
+here. However, it is also useful to be able to take any gene from any table and do this.
+We will do that next.
 ```{r plotting line plot}
 
 # We now need to futher prepare our data :)
@@ -151,44 +171,59 @@ ggplot(plot_df, aes(x = time, y = avg)) +
 
 ```
 
+# Line plot from full TPM data frame.
+Here we are going to do something more typical is plot the same line
+plots above but using the replicate information. This way we are more 
+flexible going to the full table with replicates. For example, we could 
+calculate standard error instead of standard deviation this way.
 
+# Logic flow:
+(1) Have a set of genes of interest
+(2) Reduce TPM table to those genes
+(3) Pivot longer so all TPM data is in one column (genes have multiple rows)
+(4) Group by and summarize to get mean and sd 
+(5) Plot those values
 
-#TODO start here
+```{r line plot from large table}
 
-```{r}
-#TODO start here 
+# (1) set of genes of interest or list.
+genes_of_interest <- data.frame(gene = c("ENSMUSG00000094125.1", "ENSMUSG00000079247.2", "ENSMUSG00000112027.1", "ENSMUSG00000066632.3", "ENSMUSG00000000031.16"))
 
-genes_of_interest <- data.frame(gene = c("ENSMUSG00000094125.1", "ENSMUSG00000079247.2", "ENSMUSG00000112027.1", "ENSMUSG00000066632.3"))
-
+# (2) Reduce TPM file to these genes
 df_plot_genes <- TPM_filtered[rownames(TPM_filtered) %in% genes_of_interest$gene, ]
-# moving rownames in
+
+# Moving rownames in to a column
 df_plot_genes <- rownames_to_column(df_plot_genes, var = "gene_id")
 
+# (3) Pivot longer (watch the changes !)
+df_plot_genes <- df_plot_genes %>% 
+  pivot_longer(cols = -gene_id, names_to = 'Time_Replicate', values_to = 'TPM')
 
-# TODO start here
-
-
-
-
-
-
+# Seperating sample name into time and replicate for plotting table
 df_plot_genes <- df_plot_genes %>%
-  pivot_longer(cols = everything(),
-               names_to = c("condition", "time", "replicate"),
-               names_sep = "_")
+  separate(
+    Time_Replicate,
+    into = c('WT', 'Time', 'Replicate'),
+    sep = '_',
+    extra = "merge"
+  ) %>%
+  select(-WT)
 
+# Convert Time to numeric values
+df_plot_genes$Time <- as.numeric(df_plot_genes$Time)
 
-df_plot_genes$condition <- gsub("WT_", "", df_plot_genes$condition)
-df_plot_genes$condition <- as.numeric(df_plot_genes$condition)
-df_plot_genes$replicate <- as.numeric(df_plot_genes$replicate)
+# (4) Group by Time and calculate mean and std of TPM
+df_plot_genes <- df_plot_genes %>% 
+  group_by(gene_id, Time) %>% 
+  summarise(mean_TPM = mean(TPM), sd_TPM = sd(TPM))
 
-
-library(ggplot2)
-ggplot(df_plot_genes, aes(x = condition, y = value, color = factor(replicate))) +
-  geom_line(aes(group = interaction(gene, replicate))) +
-  geom_point() +
-  labs(x = "Time (hours)", y = "TPM Value") +
-  theme_classic()
+# (5) Plot the line plot with error bars
+ggplot(df_plot_genes, aes(x = Time, y = mean_TPM)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_TPM - sd_TPM, ymax = mean_TPM + sd_TPM), width = 0.2) +
+  labs(x = 'Time (hours)', y = 'Average TPM') +
+  ggtitle('Average TPM across Time Points') +
+  facet_wrap(~ gene_id)
 
 ```
 

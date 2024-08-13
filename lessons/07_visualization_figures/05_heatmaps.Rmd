@@ -1,0 +1,155 @@
+---
+title: "05_heatmaps"
+author: "JR"
+date: "2024-08-13"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reshape)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(pheatmap)
+
+
+
+```
+
+# Goal create "heatmaps"to represent gene abundance across time and replicates.
+Heatmaps are a very common and powerful way to represent RNAseq data. It shows the 
+abundance of each gene, across all samples and shades them in colore
+for more or less abundant expression (e.g., red high, blue low). Moreover, a heatmap can
+be combined with a "clustering" algorithm to organize the patterns in the data. Finally, 
+this also tells you how related samples are. We can do this in two steps:
+
+# (1) cluster our samples to find the relationship across samples
+# (2) cluster and overlay heatmap of gene abundance across time of dox exposure
+
+Let's get started with "clustering our samples"
+First let's load the data
+
+```{r Loading data}
+
+# load TPM RESULTS: 
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/TPM_results/TPM_results.Rdata")
+
+# laod DESEQ2 results
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
+
+```
+
+# (1) Cluster samples
+First step is calculating distance between all samples. Let's start with our
+TPM data as this is typically  
+```{r distance calculation}
+
+# Log-transform the TPM values
+log_tpm_matrix <- log2(TPM_filtered + 1)
+
+distance_matrix <- dist(t(log_tpm_matrix), method = "euclidean")
+
+hc <- hclust(distance_matrix, method = "ward.D2")
+
+plot(hc, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
+
+
+# Cut tree
+clusters <- cutree(hc, k = 5)
+print(clusters)
+
+# Cool we see if we choose 5 bins each time point falls into a bin with replicates !
+
+
+
+```
+
+
+# (2) Overlapy a heatmap to measure sample similarity and gene changes across time
+# PHEATMAP is a great program for making heat maps it will do 
+```{r}
+
+# THIS TAKES 3 MIN - but worth it 
+
+pheatmap(log_tpm_matrix, 
+         cluster_rows = TRUE,  # Cluster genes (rows)
+         cluster_cols = TRUE,  # Cluster samples (columns)
+         scale = "row",        # Scale the data across rows (genes) for better visualization
+         show_rownames = FALSE, # Hide gene names for clarity
+         show_colnames = TRUE,  # Show sample names
+         main = "Heatmap of Log2-Transformed TPM Values for Sig genes")
+
+#TODO include as bonus? 
+
+custom_dist <- function(x) dist(x, method = "manhattan") # Replace "manhattan" with your preferred method
+custom_hclust <- function(x) hclust(x, method = "ward.D2") # Replace "ward.D2" with your preferred clustering method
+
+# Create a heatmap with custom distance and clustering functions
+pheatmap(log_tpm_matrix, 
+         cluster_rows = TRUE,  # Cluster genes (rows)
+         cluster_cols = TRUE,  # Cluster samples (columns)
+         scale = "row",        # Scale the data across rows (genes) for better visualization
+         show_rownames = FALSE, # Hide gene names for clarity
+         show_colnames = TRUE,  # Show sample names
+         main = "Heatmap of Log2-Transformed TPM Values",
+         distfun = custom_dist,    # Apply custom distance function
+         hclustfun = custom_hclust # Apply custom clustering function
+)
+
+
+```
+
+
+
+
+
+
+
+# Let's filter to sig genes
+```{r}
+
+sig_log_tpm_matrix <- log_tpm_matrix[rownames(log_tpm_matrix) %in% unique_sig_genes, ]
+
+sig_distance_matrix <- dist(t(sig_log_tpm_matrix), method = "euclidean")
+
+hc_sig_distance_matrix <- hclust(sig_distance_matrix, method = "ward.D2")
+
+plot(hc_sig_distance_matrix, labels = colnames(hc_sig_distance_matrix), main = "Global TPM Sig Genes Dendrogram ", sub = "sample relationship by time and replicate after dox treatment for sig genes")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+# Now heatmaps : USING PHEATMAP PACKAGE !
+
+```{r heat map of sig genes}
+
+
+
+pheatmap(sig_log_tpm_matrix, 
+         cluster_rows = TRUE,  # Cluster genes (rows)
+         cluster_cols = TRUE,  # Cluster samples (columns)
+         scale = "row",        # Scale the data across rows (genes) for better visualization
+         show_rownames = FALSE, # Hide gene names for clarity
+         show_colnames = TRUE,  # Show sample names
+         main = "Heatmap of Log2-Transformed TPM Values for Sig genes")
+
+
+```
+
+
+
+
+

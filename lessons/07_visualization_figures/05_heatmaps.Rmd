@@ -15,6 +15,7 @@ library(tibble)
 library(ggplot2)
 library(dplyr)
 library(pheatmap)
+source("../../util/plot_theme.R")
 
 
 
@@ -46,6 +47,7 @@ load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_
 # (1) Cluster samples
 First step is calculating distance between all samples. Let's start with our
 TPM data as this is typically  
+# Note use of transmute (t) 
 ```{r distance calculation}
 
 # Log-transform the TPM values
@@ -62,8 +64,8 @@ plot(hc, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogr
 clusters <- cutree(hc, k = 5)
 print(clusters)
 
-# Cool we see if we choose 5 bins each time point falls into a bin with replicates !
 
+#TODO auto ordered clustering
 
 
 ```
@@ -71,10 +73,9 @@ print(clusters)
 
 # (2) Overlapy a heatmap to measure sample similarity and gene changes across time
 # PHEATMAP is a great program for making heat maps it will do 
-```{r}
+```{r Create Heat map of all filtered TPM genes across all time points and replicates}
 
 # THIS TAKES 3 MIN - but worth it 
-
 pheatmap(log_tpm_matrix, 
          cluster_rows = TRUE,  # Cluster genes (rows)
          cluster_cols = TRUE,  # Cluster samples (columns)
@@ -104,11 +105,6 @@ pheatmap(log_tpm_matrix,
 ```
 
 
-
-
-
-
-
 # Let's filter to sig genes
 ```{r}
 
@@ -123,6 +119,7 @@ plot(hc_sig_distance_matrix, labels = colnames(hc_sig_distance_matrix), main = "
 
 ```
 
+# Counts / rlog counts
 
 
 
@@ -130,24 +127,30 @@ plot(hc_sig_distance_matrix, labels = colnames(hc_sig_distance_matrix), main = "
 
 
 
+# EXTRA
+
+```{r}
+
+# Cool we see if we choose 5 bins each time point falls into a bin with replicates !
+
+ordered_colnames <- sort(colnames(log_tpm_matrix))
+ordered_log_tpm_matrix <- log_tpm_matrix[, ordered_colnames]
+hc_ordered <- hclust(dist(t(ordered_log_tpm_matrix)), method = "ward.D2")
+
+# Step 3: Plot the dendrogram
+plot(hc_ordered, labels = ordered_colnames, main = "Global TPM Filtered Dendrogram", 
+     sub = "Sample relationship by time and replicate after dox treatment")
+
+ordered_hclust <- hc$labels[hc$order]
 
 
-# Now heatmaps : USING PHEATMAP PACKAGE !
+ordered_hclust <- hc$labels[hc$order]
 
-```{r heat map of sig genes}
-
-
-
-pheatmap(sig_log_tpm_matrix, 
-         cluster_rows = TRUE,  # Cluster genes (rows)
-         cluster_cols = TRUE,  # Cluster samples (columns)
-         scale = "row",        # Scale the data across rows (genes) for better visualization
-         show_rownames = FALSE, # Hide gene names for clarity
-         show_colnames = TRUE,  # Show sample names
-         main = "Heatmap of Log2-Transformed TPM Values for Sig genes")
+plot(ordered_hclust, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
 
 
 ```
+
 
 
 

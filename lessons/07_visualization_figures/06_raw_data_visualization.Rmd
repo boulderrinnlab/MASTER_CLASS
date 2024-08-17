@@ -1,0 +1,53 @@
+---
+title: "06_raw_data_visualization"
+author: "JR"
+date: "2024-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goal to visualize raw data for significant genes change due to dox across time.
+We have now done a bunch of analyses using statistics and other means to home in on
+genes that are regulated by dox and when. However, we haven't really gotten to see the raw data
+yet. This would be the counts and where they pile up across the entire genome !
+
+Now we are going to visualize the raw data for our favorite genes from our analyses thus far.
+
+# Integrative Genomics Viewer (IGV) 
+IGV is a great tool for visualizing read counts across the entire genome - and its FREE !
+Let's get started by downloading IGV.
+
+# (1) Download IGV
+Download for your specific computer here:
+https://igv.org/doc/desktop/#DownloadPage/
+
+# - click the version for your comp and follow download instructions
+# PICK JAVA INCLUDED VESION!
+The main IGV website for more information is here:
+https://igv.org/doc/desktop/##_top
+
+# (2) Transfer BigWig files from your NF_CORE RNA_Seq pipeline output
+In the output directory of your NF_CORE RNAseq pipeline there is a folder called
+"bigWig" these are summaries of the number of RNAseq reads aligned at a genomic position.
+These are Big so it may take a minute.
+
+# (3) Drag bigWig files into IGV
+# IMPORTANT: Make sure you select human genome "Mouse mm10" 
+This is the genome version we used to align our reads in NF_CORE RNAseq pipeline
+
+# (4) Drag in BigWig Files and Voila you can search the genome !!
+Autoscale by slecting all samples and right click on left bar to select "group auto scale"
+
+THere are a lot more tips and tricks on this accompanying YouTube video:
+```{r}
+#TODO
+```
+
+
+
+
+
+

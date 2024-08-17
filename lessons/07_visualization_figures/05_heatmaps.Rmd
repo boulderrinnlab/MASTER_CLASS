@@ -17,8 +17,6 @@ library(dplyr)
 library(pheatmap)
 source("../../util/plot_theme.R")
 
-
-
 ```
 
 # Goal create "heatmaps"to represent gene abundance across time and replicates.
@@ -46,29 +44,68 @@ load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_
 
 # (1) Cluster samples
 First step is calculating distance between all samples. Let's start with our
-TPM data as this is typically  
+TPM data as these are the values typically used for clustering and heatmaps. 
+
 # Note use of transmute (t) 
+# Note log TPM values being used
 ```{r distance calculation}
 
-# Log-transform the TPM values
+# Log-transform the TPM values. 
+# This helps deflate spurious and low values - common practice for clustering/heatmaps
 log_tpm_matrix <- log2(TPM_filtered + 1)
 
+# Now let's calculate how closely related each sample (time point) is to each other using DIST function.
+# We make a vector the length of genes in TPM_filtered. Then use correlation (DIST function) to find similarity.
+# For other methods check out dist menu 
+?dist
+
+# Let's start with euclidean distance / similarity based on log2 TPM values of genes in TPM_filtered.
 distance_matrix <- dist(t(log_tpm_matrix), method = "euclidean")
 
-hc <- hclust(distance_matrix, method = "ward.D2")
+# Now we use the function : HCLUST ! 
+# This performs the hierarchical clustering of each samples relationship
+?hclust
+# Other forms of clustering as well see menu above for now ward or complete
+# Downside of ward is it assumes a circle relationship where as complete is linear - like we have with time.
+hc_complete <- hclust(distance_matrix, method = "complete")
 
-plot(hc, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
+# Now we can use plot() to plot the distance calucalated in hclust!
+plot(hc_complete, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
 
+# Cool we see that samples see to return closer to 0 after 96 hours of dox treatment
+# Also that the replicates are more similar than time points - a very good / expected thing 
 
-# Cut tree
-clusters <- cutree(hc, k = 5)
+# Cut tree to limit the clusters 
+clusters <- cutree(hc_complete, k = 5)
+# Print out which sample is in which cluster
 print(clusters)
-
-
-#TODO auto ordered clustering
-
+# Cool we can see each time point is represented in each cluster !
 
 ```
+
+# Supervised ordering of dendogram
+Above we let the distances set where the samples end up. 
+However we can force it to order the samples the way we want
+Strategy: make a dendrogram and then reorder it 
+
+# Let's order the samples and see how things change
+```{r ordered dendrogram}
+
+# Making a dendrogram of hc_complete
+dend_hc_complete <- as.dendrogram(hc_complete)
+view(dend_hc_complete)
+
+# Reorder the dendrogram based on the clusters created above
+dend_hc_complete <- reorder(dend, clusters)
+
+# Plot the reordered dendrogram
+plot(dend_hc_complete, main = "Global TPM Filtered Dendrogram (Ordered by Cluster)", sub = "Sample relationship by time and replicate after dox treatment")
+
+# Voila they are ordered now - not still takes into consideration similarity when ordering !
+
+```
+# RESULT: Time points 0,12,96 more similar than 24, 48
+# Intrepretation: this could mean most changes occur at 24-48 hours.
 
 
 # (2) Overlapy a heatmap to measure sample similarity and gene changes across time

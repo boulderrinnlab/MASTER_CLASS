@@ -71,7 +71,6 @@ hc_complete <- hclust(distance_matrix, method = "complete")
 
 # Now we can use plot() to plot the distance calucalated in hclust!
 plot(hc_complete, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
-
 # Cool we see that samples see to return closer to 0 after 96 hours of dox treatment
 # Also that the replicates are more similar than time points - a very good / expected thing 
 
@@ -80,14 +79,12 @@ clusters <- cutree(hc_complete, k = 5)
 # Print out which sample is in which cluster
 print(clusters)
 # Cool we can see each time point is represented in each cluster !
-
 ```
 
 # Supervised ordering of dendogram
 Above we let the distances set where the samples end up. 
 However we can force it to order the samples the way we want
 Strategy: make a dendrogram and then reorder it 
-
 # Let's order the samples and see how things change
 ```{r ordered dendrogram}
 
@@ -243,7 +240,16 @@ write_rds(rlog_counts_matrix_mouse_long, "results/rlog_counts_all.rds")
 
 ```
 
+################## ExeRcise ################## 
 
+Now you should be able to make a heatmap for any gene list.
+Make a custom gene list based on properties of genes responding
+to dox in whatever way you want. Then make a heatmap. Or maybe
+test your skills and make a heatmap of one gene :) Finally,
+you could sharpen skills by making the heat map very custom
+and maybe even a funciton that creates a heatmap !!!!
+
+##############################################  
 
 
 

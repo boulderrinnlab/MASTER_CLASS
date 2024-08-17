@@ -121,72 +121,132 @@ pheatmap(log_tpm_matrix,
          show_colnames = TRUE,  # Show sample names
          main = "Heatmap of Log2-Transformed TPM Values for Sig genes")
 
-#TODO include as bonus? 
+# Notice we just said cluster in the pheatmap commands above
+# We can also change them based on what is available in pheatmap
+# Let's make a "mini function" to cluster the way we want in pheatmap
 
 custom_dist <- function(x) dist(x, method = "manhattan") # Replace "manhattan" with your preferred method
 custom_hclust <- function(x) hclust(x, method = "ward.D2") # Replace "ward.D2" with your preferred clustering method
 
 # Create a heatmap with custom distance and clustering functions
 pheatmap(log_tpm_matrix, 
-         cluster_rows = TRUE,  # Cluster genes (rows)
-         cluster_cols = TRUE,  # Cluster samples (columns)
-         scale = "row",        # Scale the data across rows (genes) for better visualization
-         show_rownames = FALSE, # Hide gene names for clarity
-         show_colnames = TRUE,  # Show sample names
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
          main = "Heatmap of Log2-Transformed TPM Values",
-         distfun = custom_dist,    # Apply custom distance function
-         hclustfun = custom_hclust # Apply custom clustering function
+         distfun = custom_dist,   
+         hclustfun = custom_hclust 
+)
+
+# Note clustering is just a relative pecie of information and not an exact science.
+# There is a whole article on the "art of clustering" :)
+# More on this here:
+# https://proceedings.mlr.press/v27/luxburg12a/luxburg12a.pdf
+```
+
+
+# Let's filter to sig genes and make dendrogram based on them and heatmap
+```{r dendrogram and heatmap of significant genes}
+
+# First filter to sig genes object log_tpm_matrix
+sig_log_tpm_matrix <- log_tpm_matrix[rownames(log_tpm_matrix) %in% unique_sig_genes, ]
+
+# calculate distances
+sig_distance_matrix <- dist(t(sig_log_tpm_matrix), method = "euclidean")
+
+# cluster
+hc_sig_distance_matrix <- hclust(sig_distance_matrix, method = "complete")
+
+# Plotting
+plot(hc_sig_distance_matrix, labels = colnames(hc_sig_distance_matrix), main = "Log2 TPM Sig Genes Dendrogram ", sub = "sample relationship by time and replicate after dox treatment for sig genes")
+
+# Setting custom clustering and dist funcitons
+custom_dist <- function(x) dist(x, method = "manhattan") 
+custom_hclust <- function(x) hclust(x, method = "ward.D2") 
+
+# Create a heatmap for sig genes using custom clust/dist (and change the color)
+pheatmap(sig_log_tpm_matrix, 
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Log2-Transformed TPM Values",
+         distfun = custom_dist,
+         color = colorRampPalette(c("blue", "white", "red"))(50),
+         hclustfun = custom_hclust 
+)
+
+```
+# RESULT: Samples mostly cluster as expected except 24_R3 
+# Now you can make a figure for any gene of interest !!
+
+
+# RLOG Counts
+DESEQ2 does a great funciton of normalizing counts for a heatmap.
+This is called rlog counts. There is a bunch of information here:
+https://compbiocore.github.io/deseq-workshop-1/assets/deseq_workshop_1.html
+Let's do this so we have it in our tool kit !
+First, we need to load in our DDS from 0
+
+# Load DDS to perform Rlog count analysis
+
+```{r load dds for mouse long time course DESEQ2}
+# Loading DDS
+load("../06_Differential_expression_analyses/results/dds_time_point_mouse_long.RData", verbose = TRUE)
+
+# First Normalize counts (rlog) function in DESEQ2
+# This basically is rank counts normalized to std error in replicates.
+rlog_counts_mouse_long <- rlog(dds_time_point, blind = TRUE)
+
+# Now we retrieve the values using the "assay" function that converts to rlog_counts)
+rlog_counts_matrix_mouse_long <- assay(rlog_counts_mouse_long)
+# which(is.na(rlog_counts_mouse_long))
+
+# Filter to sig genes
+sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rrownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
+
+
+pheatmap(rlog_counts_matrix_mouse_long, 
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Rlog-Transformed Values",
+         color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
+         )
+
+# now filter to sig genes
+
+
+sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
+
+pheatmap(sig_rlog_counts_matrix_mouse_long, 
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Rlog-Transformed Values",
+         color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
+
 )
 
 
-```
-
-
-# Let's filter to sig genes
-```{r}
-
-sig_log_tpm_matrix <- log_tpm_matrix[rownames(log_tpm_matrix) %in% unique_sig_genes, ]
-
-sig_distance_matrix <- dist(t(sig_log_tpm_matrix), method = "euclidean")
-
-hc_sig_distance_matrix <- hclust(sig_distance_matrix, method = "ward.D2")
-
-plot(hc_sig_distance_matrix, labels = colnames(hc_sig_distance_matrix), main = "Global TPM Sig Genes Dendrogram ", sub = "sample relationship by time and replicate after dox treatment for sig genes")
-
+# Now we can write this out and START from here in the future.
+# create new folder 'rlog_count_matrices'
+library(readr)
+write_rds(rlog_counts_matrix_mouse_long, "results/rlog_counts_all.rds")
 
 ```
 
-# Counts / rlog counts
 
 
 
 
-
-
-
-# EXTRA
-
-```{r}
-
-# Cool we see if we choose 5 bins each time point falls into a bin with replicates !
-
-ordered_colnames <- sort(colnames(log_tpm_matrix))
-ordered_log_tpm_matrix <- log_tpm_matrix[, ordered_colnames]
-hc_ordered <- hclust(dist(t(ordered_log_tpm_matrix)), method = "ward.D2")
-
-# Step 3: Plot the dendrogram
-plot(hc_ordered, labels = ordered_colnames, main = "Global TPM Filtered Dendrogram", 
-     sub = "Sample relationship by time and replicate after dox treatment")
-
-ordered_hclust <- hc$labels[hc$order]
-
-
-ordered_hclust <- hc$labels[hc$order]
-
-plot(ordered_hclust, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
-
-
-```
 
 
 

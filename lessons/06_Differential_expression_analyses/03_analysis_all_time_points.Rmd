@@ -164,6 +164,8 @@ view(res_df)
 # saving results in res_df
 ```{r saving our results data frame}
 save(res_df, file = "results/time_point_res_df.RData")
+# let's also save our DDS
+save(dds_time_point, file = "results/dds_time_point_mouse_long.RData")
 ```
 
 # Nice we have all our results now let's go over what it all means :) !

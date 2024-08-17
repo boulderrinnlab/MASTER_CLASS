@@ -15,6 +15,7 @@ library(tibble)
 library(ggplot2)
 library(dplyr)
 library(pheatmap)
+library(readr)
 source("../../util/plot_theme.R")
 
 ```
@@ -93,7 +94,7 @@ dend_hc_complete <- as.dendrogram(hc_complete)
 view(dend_hc_complete)
 
 # Reorder the dendrogram based on the clusters created above
-dend_hc_complete <- reorder(dend, clusters)
+dend_hc_complete <- reorder(dend_hc_complete, clusters)
 
 # Plot the reordered dendrogram
 plot(dend_hc_complete, main = "Global TPM Filtered Dendrogram (Ordered by Cluster)", sub = "Sample relationship by time and replicate after dox treatment")
@@ -133,6 +134,7 @@ pheatmap(log_tpm_matrix,
          show_rownames = FALSE, 
          show_colnames = TRUE,  
          main = "Heatmap of Log2-Transformed TPM Values",
+         color = colorRampPalette(c("blue", "white", "red"))(50),
          distfun = custom_dist,   
          hclustfun = custom_hclust 
 )
@@ -141,12 +143,12 @@ pheatmap(log_tpm_matrix,
 # There is a whole article on the "art of clustering" :)
 # More on this here:
 # https://proceedings.mlr.press/v27/luxburg12a/luxburg12a.pdf
+
 ```
 
 
 # Let's filter to sig genes and make dendrogram based on them and heatmap
 ```{r dendrogram and heatmap of significant genes}
-
 # First filter to sig genes object log_tpm_matrix
 sig_log_tpm_matrix <- log_tpm_matrix[rownames(log_tpm_matrix) %in% unique_sig_genes, ]
 
@@ -175,6 +177,25 @@ pheatmap(sig_log_tpm_matrix,
          color = colorRampPalette(c("blue", "white", "red"))(50),
          hclustfun = custom_hclust 
 )
+```
+
+# Now let's change the scale of "heat" to 2,-2
+This will turn up the heat :)
+```{r changing scale in pheatmap}
+
+# Set the scale
+breaks <- seq(-2, 2, length.out = 51)
+
+# Create the heatmap with specified scale limits
+pheatmap(sig_log_tpm_matrix, 
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         color = colorRampPalette(c("blue", "white", "red"))(50), # Apply the custom color palette
+         breaks = breaks,       # Apply the breaks to limit the scale
+         main = "Heatmap of Log2-Transformed TPM Values for Sig genes")
 
 ```
 # RESULT: Samples mostly cluster as expected except 24_R3 
@@ -203,35 +224,49 @@ rlog_counts_matrix_mouse_long <- assay(rlog_counts_mouse_long)
 # which(is.na(rlog_counts_mouse_long))
 
 # Filter to sig genes
-sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rrownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
-
-
-pheatmap(rlog_counts_matrix_mouse_long, 
-         cluster_rows = TRUE,  
-         cluster_cols = TRUE,  
-         scale = "row",        
-         show_rownames = FALSE, 
-         show_colnames = TRUE,  
-         main = "Heatmap of Rlog-Transformed Values",
-         color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
-         )
-
-# now filter to sig genes
-
-
 sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
 
+# Plotting heatmap
 pheatmap(sig_rlog_counts_matrix_mouse_long, 
          cluster_rows = TRUE,  
          cluster_cols = TRUE,  
          scale = "row",        
          show_rownames = FALSE, 
          show_colnames = TRUE,  
-         main = "Heatmap of Rlog-Transformed Values",
+         main = "Heatmap of Sig genes Rlog-Transformed Values",
+         breaks = breaks,
          color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
+         )
 
+# now filter to sig genes
+sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
+
+
+# Plot heap map of Rlog counts of sig genes
+pheatmap(sig_rlog_counts_matrix_mouse_long, 
+         cluster_rows = TRUE,  
+         cluster_cols = TRUE,  
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Rlog-Transformed Values" )
+
+# Now let's order again
+ordered_matrix <- sig_rlog_counts_matrix_mouse_long[, order(colnames(sig_rlog_counts_matrix_mouse_long))]
+
+# Create the heatmap with columns ordered by name
+pheatmap(ordered_matrix, 
+         cluster_rows = TRUE,  
+         cluster_cols = FALSE,  # Do not cluster columns, just order by name
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Sig genes Rlog-Transformed Values",
+         breaks = breaks,
+         color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
 )
 
+# NICE !! We are heatmap pros now !!
 
 # Now we can write this out and START from here in the future.
 # create new folder 'rlog_count_matrices'
@@ -251,11 +286,57 @@ and maybe even a funciton that creates a heatmap !!!!
 
 ##############################################  
 
+# BONUS : find average and plot heatmap :)
+Let's grab the average values using a short set of code
+Then plot heat map with average rlog counts (same for TPM matrix)
+```{r get average values and plot heatmap}
 
+# Splitting col names to get sample info for average
+split_names <- strsplit(colnames(ordered_matrix), "_")
 
+# Extract the time point part of the names (the first two elements combined)
+time_points <- sapply(split_names, function(x) paste(x[1], x[2], sep = "_"))
 
+# Calculate the mean across replicates for each time point
+average_matrix <- sapply(unique(time_points), function(tp) {
+  rowMeans(ordered_matrix[, time_points == tp, drop = FALSE])
+})
 
+# Convert the result back to a matrix with appropriate row and column names
+average_matrix <- as.matrix(average_matrix)
+rownames(average_matrix) <- rownames(ordered_matrix)
+colnames(average_matrix) <- unique(time_points)
 
+# Now you can plot the heatmap using the averaged matrix
+pheatmap(average_matrix, 
+         cluster_rows = TRUE,  
+         cluster_cols = FALSE,  # Do not cluster columns, just order by time point
+         scale = "row",        
+         show_rownames = FALSE, 
+         show_colnames = TRUE,  
+         main = "Heatmap of Sig genes Rlog-Transformed Values (Averaged by Time Point)",
+         breaks = breaks,
+         color = colorRampPalette(c("blue", "white", "red"))(50) # Gradient from blue to red
+)
+```
 
+# Also color schemes are a thing - here are some others to try:
+
+# Here are some cool colorRampPalette options for heatmaps of RNA sequencing data:
+# 1. Viridis
+# A popular choice for heatmaps, as it's perceptually uniform and accessible for colorblind individuals.
+# colorRampPalette(c("#440154", "#2b8cbe", "#f7f7f7", "#fed976", "#fb8a54"))
+# 2. Inferno
+# A smooth, continuous palette that works well for displaying gene expression values.
+# colorRampPalette(c("#000000", "#2c3e50", "#8e44ad", "#f1c40f", "#e74c3c"))
+# 3. Plasma
+# A vibrant, blue-dominated palette that's perfect for highlighting differentially expressed genes.
+# colorRampPalette(c("#2c7bb6", "#00a6ca", "#f7f7f7", "#edc949", "#e67e73"))
+# 4. Magma
+# A warm, orange-yellow palette that's great for showing gene expression intensity.
+# colorRampPalette(c("#000000", "#4a0a4a", "#f2c464", "#f7dc6f", "#fdbe3b"))
+# 5. Blue-Red Diverging
+# A classic diverging palette that's useful for displaying log-fold changes or correlation values.
+# colorRampPalette(c("#2196f3", "#ffffff", "#f44336"))
 
 

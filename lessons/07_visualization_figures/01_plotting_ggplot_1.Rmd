@@ -105,9 +105,8 @@ We can even index and run functions in aes()
 ```{R # coloring by data in aes() layer}
 
 
-ggplot(filtered_res_df, aes(x = log2FoldChange, 
-                 y = padj,
-                 color = result_name)) +
+ggplot(filtered_res_df,
+       aes(x = log2FoldChange, y = padj, color = result_name)) +
   geom_point()
 
 # Nice now we can see that we mapped our data in the aes() layer to be by timepoint of sigifcance.

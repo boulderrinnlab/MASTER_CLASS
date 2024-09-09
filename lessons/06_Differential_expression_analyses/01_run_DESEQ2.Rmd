@@ -104,7 +104,6 @@ This basically is rank counts normalized to std error in replicates.
 
 ```{r rlog }
 rlog_counts <- rlog(dds, blind = TRUE)
-
 ```
 
 # now we retrieve the values using the "assay" function that converts to rlog_counts

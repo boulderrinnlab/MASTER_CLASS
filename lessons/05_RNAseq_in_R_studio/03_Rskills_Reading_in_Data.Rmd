@@ -74,7 +74,7 @@ To do this we will use the rownames function
 
 # Creating a dataframe with gene_id and gene_symbol
 # note creating columns with name = data
-g2s <- data.frame(gene_id = rownames(counts_matrix), gene_symbol = counts_matrix[, 1])
+g2s <- data.frame(gene_id = rownames(counts_matrix), gene_symbol = counts_matrix[ , 1])
 
 # Let's save this using write.csv
 write.csv(g2s, "results/g2s.csv")
@@ -141,7 +141,7 @@ So in the end we have [rows, and all the columns originally present]
 ```{R filtering}
 
 # Filtering so Deseq is not getting too many 0's for normalization
-counts_filtered <- counts_matrix_rounded[rowSums(counts_matrix_rounded) > 1,]
+counts_filtered <- counts_matrix_rounded[rowSums(counts_matrix_rounded) > 1, ]
 
 ## Check out values of counts_matrix and counts_filtered in Environment panel (top right)
 # How many genes were filtered out by this indexing? Hint compare counts_matrix_rounded with counts_filtered

@@ -16,7 +16,7 @@ library(tibble)
 library(dplyr)
 library(ggplot2)
 
-BiocManager::install("apeglm")
+#BiocManager::install("apeglm")
 
 ```
 

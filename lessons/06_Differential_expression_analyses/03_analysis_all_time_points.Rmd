@@ -9,6 +9,12 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(DESeq2)
+library(readr)
+library(magrittr)
+library(tibble)
+library(dplyr)
+library(ggplot2)
 ```
 
 # Loading counts matrix raw input from Salmon (see pipeline documentation)
@@ -27,7 +33,7 @@ This will archive all genes in the starting analysis
 # Note making data frame from index other files
 g2s <- data.frame(
   gene_id = rownames(counts_matrix),
-  gene_name = counts_matrix[, 1]
+  gene_name = counts_matrix[ , 1]
 )
 view(g2s)
 
@@ -52,7 +58,7 @@ View(counts_integer)
 # Loading Deseq_sample_sheet
 ```{r loading in sample sheet for DESEQ2}
 load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)
-
+view(deseq_samples)
 # oops that loaded a count matrix that isn't in integer -let's fix that
 counts_integer <- round(counts_matrix)
 
@@ -100,7 +106,7 @@ result_names <- resultsNames(dds_time_point)
 view(result_names)
 # Let's get rid of intercept
 results_names <- result_names[-1]
-
+view(results_names)
 # Now the empty data frame with values we want to grab from results
 
 res_df <- data.frame("gene_id" = character(), 

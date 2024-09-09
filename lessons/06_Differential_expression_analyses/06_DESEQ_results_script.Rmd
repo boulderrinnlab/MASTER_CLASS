@@ -158,7 +158,7 @@ any(rowSums(TPM) < 1)
 
 # Calculating mean and sd for each gene in each time point (replicate mean and sd)
 ```{r making table of mean and sd TPM value for each gene for each time point}
-install.packages("matrixStats")
+#install.packages("matrixStats")
 library(matrixStats)
 
 # Time and replicate values

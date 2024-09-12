@@ -91,6 +91,8 @@ Strategy: make a dendrogram and then reorder it
 
 # Making a dendrogram of hc_complete
 dend_hc_complete <- as.dendrogram(hc_complete)
+
+
 view(dend_hc_complete)
 
 # Reorder the dendrogram based on the clusters created above
@@ -218,7 +220,7 @@ load("../06_Differential_expression_analyses/results/dds_time_point_mouse_long.R
 # First Normalize counts (rlog) function in DESEQ2
 # This basically is rank counts normalized to std error in replicates.
 rlog_counts_mouse_long <- rlog(dds_time_point, blind = TRUE)
-
+library(DESeq2)
 # Now we retrieve the values using the "assay" function that converts to rlog_counts)
 rlog_counts_matrix_mouse_long <- assay(rlog_counts_mouse_long)
 # which(is.na(rlog_counts_mouse_long))

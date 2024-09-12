@@ -15,6 +15,7 @@ library(tidyr)
 library(tibble)
 library(ggplot2)
 library(dplyr)
+source("../../util/00_our_first_function_lesson.R")
 ```
 # Goal: use TPM values to make plots of how genes change in abundance due to dox and time
 So far we have been learning to plot using the results of DESEQ2 such as pvalue, padj 
@@ -100,6 +101,7 @@ summary(average_and_stddev_values)
 ```{r TPM for DESEQ2 sig genes}
 
 sig_genes <- as.data.frame(unique(filtered_res_df$gene_id))
+
 names(sig_genes) <- "gene_id"
 
 # one way to subset the data frame of avrg / sd TPM values
@@ -126,6 +128,7 @@ sig_gene_tpm <- sig_gene_tpm %>%
 
 # Picking a favorite gene
 gene_up <- as.data.frame(c("Gm9045"))
+
 names(gene_up) <- "gene_name"
 
 # indexing to just get values for this gene
@@ -152,6 +155,7 @@ We will do that next.
 # We now need to futher prepare our data :)
 # Let's get a variable for col names to plot
 avg_cols <- grep("_avg", names(Gm9045_tpm), value = TRUE)
+
 sd_cols <- grep("_sd", names(Gm9045_tpm), value = TRUE)
 
 # This is another way to "melt" or pivot longer

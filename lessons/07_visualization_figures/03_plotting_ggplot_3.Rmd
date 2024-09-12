@@ -10,6 +10,11 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
+library(readr)
+library(magrittr)
+library(tibble)
+library(dplyr)
+
 ```
 # Load data
 ```{r loading our RNAseq analysis data TPM & COUNTS}
@@ -186,8 +191,10 @@ ggplot(filtered_res_df, aes(pvalue, padj)) +
         filtered_res_df
       )
     )[1], 2)),
-    parse = TRUE, color = "red", size = 6
-  ) + 
+    parse = TRUE,
+    color = "red",
+    size = 6
+  ) +
   ggtitle("Super cool linear regression?", subtitle = "pvalues are different than padj")
 
 # Note that we did the lm in the "label" layer of geom_text()

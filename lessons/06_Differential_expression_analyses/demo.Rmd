@@ -21,6 +21,7 @@ library(pheatmap)
 library(textshape)
 library(Rcpp)
 library(DESeq2)
+library(matrixStats)
 ```
 
 So far, we have done a lot of fundamental RNA sequencing analysis - great work!
@@ -159,7 +160,7 @@ any(rowSums(TPM) < 1)
 # Calculating mean and sd for each gene in each time point (replicate mean and sd)
 ```{r making table of mean and sd TPM value for each gene for each time point}
 #install.packages("matrixStats")
-library(matrixStats)
+# library(matrixStats)
 
 # Time and replicate values
 time_points <- c("0", "12", "24", "48", "96")

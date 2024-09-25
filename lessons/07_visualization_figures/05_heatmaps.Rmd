@@ -225,6 +225,8 @@ library(DESeq2)
 rlog_counts_matrix_mouse_long <- assay(rlog_counts_mouse_long)
 # which(is.na(rlog_counts_mouse_long))
 
+breaks <- seq(-2, 2, length.out = 51)
+
 # Filter to sig genes
 sig_rlog_counts_matrix_mouse_long <- rlog_counts_matrix_mouse_long[rownames(rlog_counts_matrix_mouse_long) %in% unique_sig_genes, ]
 

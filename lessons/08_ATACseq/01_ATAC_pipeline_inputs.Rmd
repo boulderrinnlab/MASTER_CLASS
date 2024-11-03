@@ -1,0 +1,12 @@
+---
+title: "01_ATAC_pipeline_inputs"
+author: "JR"
+date: "2024-10-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# GOAL: Run the ATACseq NF_CORE pipeline!

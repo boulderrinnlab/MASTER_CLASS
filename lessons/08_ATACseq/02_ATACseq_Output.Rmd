@@ -57,14 +57,30 @@ Follow these steps and answer the questions along the way !
     - good examples would be peak in all samples or one changing by time
 
 
-# (3) RESULTS -MACS2
+# (3) RESULTS -MACS2 (Model-based Analysis for ChIP-Seq))
 
-Goto consensus folder and transfer "intersect.plot.pdf" only PDF in folder
+Go to the consensus folder and transfer "intersect.plot.pdf" only PDF in folder
 Try and understand the plot.
 
 What sample has the most unique number of peaks for just that sample.
 Which two have the most peaks in common
 How many peaks are in all samples?
+
+Explore even more in IGV or in the result output and enjoy !
+
+########### Thought ExeRcise ###########  
+
+# (1) What are consensus peaks and how are they made by MACS2?
+
+# (2) What research questions could we ask with the consensus peaks?
+
+# (3) Look up Broad Peak / Narrow Peak / gapped peak 
+
+# Hint: Use ChatGPT :) just make sure to use MACS2 in prompt !
+
+Next we will move on to explore where the peaks are in the genome
+and how they compare across time points. 
+
 
 
 

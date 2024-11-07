@@ -42,6 +42,8 @@ You will need:
 (a) run.sh 
 (b) design file 
 
+
+
 # Once you have this complete - run the pipeline !!
 # Hints:
 
@@ -54,8 +56,9 @@ It is in the same directory as the genomes.
 /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25
 
 (c) There is a sample sheet with info of where the fastq files are located:
-
 /scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq
+#NOTE we are only using Wild Type Stem Cell ATACseq data
+These are samples in the sheet that have these col values: "ESC	WT	control"
 
 Also all the fastq's are there.
 

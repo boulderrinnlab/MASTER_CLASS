@@ -11,8 +11,6 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-
 # Goal: to understand the basic usage of Iranges. These principles are core to almost
 all analyses we will perform so it's worth taking sometime to review the fundamentals.
 

@@ -1,0 +1,112 @@
+---
+title: "01_import_peaks"
+author: "JR"
+date: "2024-11-16"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+```
+
+# GOAL: To start to analyze what happens to chromatin accessibility upon dox exposure.
+We now have peak files for each individual time point. Let's find out how well the peaks
+overlap across replicates. Then with some basics in overlaps compare the WT and KO control
+zero time points. (Note: we saw in the multiqc output that WT and KO seemed a bit different) -
+Let's go investigate our peak files !
+
+# Let's go Find your peak output files in: your_ATACseq_pipeline_output/bwa/merged_library>
+```{r base file path to peaks}
+
+# First let's set a file path to where all our peak files are.
+# This is very helpful in the long run to not have huge filepaths everywhere :)
+peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+# Now let's make a list of filepaths to each peak file -- "list.files"
+# we add a pattern parameter to just load .broadPeaks as there are many other types.
+
+fl <- list.files(peak_path, 
+                 full.names=TRUE, pattern = ".broadPeak")
+
+# let's see 
+fl
+
+# This gives us an index 1:n where each peak file path is a character vector.
+# let's try this to grab just one protein (can be the one from your group)
+fl_KO <- fl[grep("KO_control", fl)]
+
+# cool now we can subset this to any protein of our choosing
+
+pattern <- "(KO|WT)_control_\\d+"
+
+```
+
+# extracting sample name from file name
+
+```{r}
+
+sample_name <- sapply(fl, function(y){
+ y <-  str_extract(y, "(KO|WT)_control_\\d+")
+  
+})
+
+```
+
+
+```{r}
+
+
+import_peaks <- function(consensus_file_path = peak_path) {
+  peak_files <- list.files(consensus_file_path, full.names = T, pattern = ".broadPeak")
+  
+  # now extract unique sample names directly from file name
+  sample_name <- sapply(fl, function(y){
+ y <-  str_extract(y, "(KO|WT)_control_\\d+")
+    
+    })
+  
+# NOW FOR LOOP TO IMPORT FILES
+  
+# setting an empty list "peak_list" to be filled by for loop
+  peak_list <- c()
+  
+  # the for loop !
+  for(i in 1:length(peak_files)) {
+    # Import peaks
+    peaks <- rtracklayer::import(peak_files[i])
+    # Append this GRanges object to the of the list peak_list we set empty above.
+    peak_list <- c(peak_list, peaks)
+    # Name the list elements by their TF name.
+    names(peak_list)[length(peak_list)] <- sample_name[i]
+  }
+  return(peak_list)
+}
+
+my_peaks <- import_peaks(consensus_file_path = peak_path)
+# what happened? Nothing ? Why ?
+
+num_peaks <- sapply(my_peaks, length) %>% as.data.frame()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

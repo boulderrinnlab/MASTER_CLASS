@@ -136,11 +136,18 @@ gencode_gr_length <- data.frame("gene_id" = gencode_gr@elementMetadata$gene_id,
                            
 ```
 
-# Let's save this document !
+# Let's save our gencode_gr and gencode_gr_length objects for the next lesson - and good book keeping!
 
-```{r}
+```{r save our GRanges}
 
-write_csv2(gencode_gr_length, "results/gencode_gr_length.csv")
+# The key objects we need moving forward (to save that 5min rtracklayer::import) are : 
+# Gencode_gr : has all the genome features as GRanges object
+# Gencode_gr_length: is in more of a data frame format with properties selected above
+# -- feel free to pick more in the future ;)
+
+write_rds(gencode_gr, "results/mv25_gencode_GRanges.rds")
+write_rds(gencode_gr_length, "results/mv25_gencode_gr_length.rds")
+save(gencode_gr, gencode_gr_length, file = "results/mv25_gencode_GRanges.Rdata")
 
 ```
 

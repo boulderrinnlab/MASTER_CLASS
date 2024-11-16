@@ -3,6 +3,8 @@ title: "06_R_genome_GRanges_II"
 author: "JR"
 date: "2024-11-13"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Goal explore properties of lncRNA and protein coding genes using R-code!
@@ -15,22 +17,21 @@ questions on genome-wide scale using R-code.
 
 ```{R mRNA gene width}
 
-# reading in our data frame of annotations
-
-gencode_gr_2 <- read_csv2("results/gencode_gr_length.csv")
+load("results/mv25_gencode_GRanges.Rdata")
 
 # here we are filtering our gencode_gr_length data frame above using the column names (e.g., gene_type)
-
-# parameters for filter(data.frame, col-name1 == " character" )
-
-# We will filter to just "protein_coding" genes
+# parameters/syntax for filter(data.frame, col-name1 == " character" )
+# We will filter to just "protein_coding" and "genes" as there are other annotations such as exons etc.
 
 mrna_df <- filter(gencode_gr_length, gene_type == "protein_coding", type == "gene")
 
+# How many mRNAs do you think there are in the mouse genome?
+
+# Let's explore how big genes are !
 # we can easily plot a histogram of mRNA gene widths.
 hist(log10(mrna_df$width), breaks = 60)
 
-# same for lncRNAs
+# same for lncRNAs (here they are called "lincRNA")
 lncrna_df <- filter(gencode_gr_length, gene_type == "lincRNA", type == "gene")
 
 # plotting lncRNA
@@ -82,17 +83,27 @@ width_1_items <- gencode_gr[width(gencode_gr) == 1] %>%
 table(width_1_items$type)
 # so weird that a CDS can be 1nt or an exon.
 
-# looking for weird exons (also CDS and codons don't make sense to be = 1??)
-weird_exons <- width_1_items %>% 
-  filter(type == "exon")
+# looking for weird exons and coding sequences as 1nt ? 
+weird_cds <- width_1_items %>% 
+  filter(type == "CDS")
 
 ```
 
-huh 33 exons are 1 nt -- annotations are never perfect :)
-The one thing that should be 1nt long is a TSS.
-To get the TSS we need to use the promters function:
+huh 294 Coding Sequences (CDS) are 1 nt -- annotations are never perfect :)
+It's about 1% error - not too bad !
 
-# defining gene TSS 
+
+# Anyways: One thing that should be 1nt long is a TSS.
+Speaking of transcriptional start site(TSS) this is a super handy feature.
+Something we would want to overlap our ATACseq peaks with to see how many peaks
+are near genes versus not near genes etc. And or what genes have peaks and which don't.
+
+TSS: actual start of gene transcript
+Promoter: the region of regulation for turning gene on or off.
+
+# defining gene TSS or promoter regions (super-useful!!) 
+To do this we will use the GenomicRanges function "promoters"
+Let's go!
 ```{R annotation widths of 1 ?}
 
 # The promoters function defines the TSS and input bases up and downstream.
@@ -101,7 +112,7 @@ tss <- promoters(gencode_gr[gencode_gr$type == "gene"],
                  upstream = 0, downstream = 0) %>%
   as.data.frame()
 
-# we see 60,609 TSS. Let's see if that is the same as # of genes
+# we see 55,401 TSS. Let's see if that is the same as # of genes
 summary(gencode_gr[gencode_gr$type == "gene"])
 # cool the same
 
@@ -121,9 +132,8 @@ gencode_df %>%
   head()
 
 # Voila here is the shortest gene (8nt long ??): TRDD1
-# seqnames     start       end width strand source type score phase           gene_id gene_type gene_name level    hgnc_id          havana_gene
-# 1    chr14  22438547  22438554     8      + HAVANA gene    NA    NA ENSG00000223997.1 TR_D_gene     TRDD1     2 HGNC:12254 OTTHUMG00000170844.2
-```
+# seqnames     start       end width strand source type score phase              gene_id       gene_type gene_name level      mgi_id          havana_gene transcript_id
+# 1    chr12 113454942 113454951    10      - HAVANA gene    NA    NA ENSMUSG00000094957.1       IG_D_gene   Ighd5-5     2 MGI:4937334 OTTMUSG00000051531.2          <NA>
 
 # now the longest gene using -arrange
 ```{longest  gene in human genome}
@@ -133,8 +143,8 @@ gencode_df %>%
   arrange(-width) %>%
   head()
 
-#   seqnames     start       end   width strand source type score phase            gene_id      gene_type gene_name level    hgnc_id
-# 1    chr16   5239802   7713340 2473539      + HAVANA gene    NA    NA ENSG00000078328.21 protein_coding    RBFOX1     1 HGNC:18222
+# seqnames     start       end   width strand source type score phase               gene_id      gene_type gene_name level      mgi_id           havana_gene transcript_id
+# 1     chr8 119910841 124345722 4434882      + HAVANA gene    NA    NA  ENSMUSG00000092329.1 protein_coding   Galnt2l     2 MGI:5141853  OTTMUSG00000026145.5          <NA>
 
 # We can also store the longest gene as an object with max function
 longest_gene <- gencode_df %>%
@@ -170,7 +180,7 @@ total_exon_length <- gencode_gr[gencode_gr$type == "exon"] %>%
 # the human genome is 3.9B base pairs so let's find the percentage by division:
 
 total_exon_length/3.2e9
-# Boom we can see the human genome is about 4% exons!
+# Boom we can see the mouse genome is about 4% exons (spoiler human genome is 4% too)!
 
 # if we want to plot the range of exon sizes we simply remove the sum function and plot:
 exon_lengths <- gencode_gr[gencode_gr$type == "exon"] %>%
@@ -182,7 +192,7 @@ hist(width(exon_lengths), breaks = 100, xlim = c(0,10000))
 # we see most exons are under 2kb what is the average?
 
 avergage_exon_length <- mean(width(exon_lengths))
-# Cool the average exon length is 444nt !
+# Cool the average exon length is 454nt (human 444nt) !
 ```
 
 # what percentage of the genome is comprised of gene bodies?
@@ -195,7 +205,7 @@ reduced_gene_bodies <- gencode_gr[gencode_gr$type == "gene"] %>%
   sum()
 
 reduced_gene_bodies/3.2e9
-# Woah gene bodies take up 50% of genome !!
+# Woah gene bodies take up 40% of the mouse genome !!
 
 # lets' see the range of sizes (take out width adn sum from above)
 gene_body_lengths <- gencode_gr[gencode_gr$type == "gene"] %>%
@@ -204,13 +214,13 @@ gene_body_lengths <- gencode_gr[gencode_gr$type == "gene"] %>%
 # plotting
 hist(width(gene_body_lengths), breaks = 100, xlim = c(0,500000))
 
-# we see most are less than 200Kb long (we previous saw longest was 2M !)
+# we see most are less than 200Kb long (we previous saw longest was over 500Kbp !)
 
 # what is the average length of a gene body?
 
 mean(width(gene_body_lengths))
 
-# answer is 38Kb !
+# answer is 26,522 or ~27Kb (38Kb human) !
 ```
 
 ####################

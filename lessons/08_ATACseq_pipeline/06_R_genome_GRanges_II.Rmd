@@ -1,0 +1,235 @@
+---
+title: "06_R_genome_GRanges_II"
+author: "JR"
+date: "2024-11-13"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Goal explore properties of lncRNA and protein coding genes using R-code!
+We just finished last lesson with exploring some legnth features of genes.
+Mostly using the filter button on the R-studio viewer. Now let's ask these 
+questions on genome-wide scale using R-code.
+
+
+# First explore the length of genes in the mouse genome 
+
+```{R mRNA gene width}
+
+load("results/mv25_gencode_GRanges.Rdata")
+
+# here we are filtering our gencode_gr_length data frame above using the column names (e.g., gene_type)
+# parameters/syntax for filter(data.frame, col-name1 == " character" )
+# We will filter to just "protein_coding" and "genes" as there are other annotations such as exons etc.
+
+mrna_df <- filter(gencode_gr_length, gene_type == "protein_coding", type == "gene")
+
+# How many mRNAs do you think there are in the mouse genome?
+
+# Let's explore how big genes are !
+# we can easily plot a histogram of mRNA gene widths.
+hist(log10(mrna_df$width), breaks = 60)
+
+# same for lncRNAs (here they are called "lincRNA")
+lncrna_df <- filter(gencode_gr_length, gene_type == "lincRNA", type == "gene")
+
+# plotting lncRNA
+hist(log10(lncrna_df$width), breaks = 60)
+
+# Let's see what the average gene size is. Note we can no longer use width in a DF
+mean(lncrna_df$width)
+mean(mrna_df$width)
+
+# this all points to mRNAs being 2x longer than lncRNAs.
+# Note this is for genebody length -- we will do more with exons below.
+```
+
+
+# How many types of "gene types" are there?
+
+Here we will index into gencode_gr to $type
+this has all the info of types of genes included.
+```{R gene types}
+
+# indexing into gene typse 
+table(gencode_gr@elementMetadata$type)
+
+## cool this tell us a lot about the genome with one line!
+
+# Moving forwrard we will use the "$type" "genes"
+```
+
+# Finding genome feature lengths
+let's find the longest and shortest genes in the genome!
+But first let's see how to find the lengths of genome features.
+```{R annotation lengths} 
+
+# Let's see the range of gene sizes
+summary(width(gencode_gr))
+
+```
+
+interesting some genes are just 1 nt long!
+let's look into that some more
+
+# what annotaitons have width of 1nt?
+```{R annotation widths of 1 ?}
+# we will use indexing and setting a value of 1 and making DF
+width_1_items <- gencode_gr[width(gencode_gr) == 1] %>%
+  as.data.frame()
+
+# let's look
+table(width_1_items$type)
+# so weird that a CDS can be 1nt or an exon.
+
+# looking for weird exons and coding sequences as 1nt ? 
+weird_cds <- width_1_items %>% 
+  filter(type == "CDS")
+
+```
+
+huh 294 Coding Sequences (CDS) are 1 nt -- annotations are never perfect :)
+It's about 1% error - not too bad !
+
+
+# Anyways: One thing that should be 1nt long is a TSS.
+Speaking of transcriptional start site(TSS) this is a super handy feature.
+Something we would want to overlap our ATACseq peaks with to see how many peaks
+are near genes versus not near genes etc. And or what genes have peaks and which don't.
+
+TSS: actual start of gene transcript
+Promoter: the region of regulation for turning gene on or off.
+
+# defining gene TSS or promoter regions (super-useful!!) 
+To do this we will use the GenomicRanges function "promoters"
+Let's go!
+```{R annotation widths of 1 ?}
+
+# The promoters function defines the TSS and input bases up and downstream.
+# Parameters are some gene annotation of interest: let's use "gene"
+tss <- promoters(gencode_gr[gencode_gr$type == "gene"], 
+                 upstream = 0, downstream = 0) %>%
+  as.data.frame()
+
+# we see 55,401 TSS. Let's see if that is the same as # of genes
+summary(gencode_gr[gencode_gr$type == "gene"])
+# cool the same
+
+```
+
+# What is the shortest gene?
+Here we will bring together our indexing and filter skills
+```{shortest gene in human genome}
+# Let's turn gencode_gr into a data.frame and filter to only genes.
+gencode_df <- gencode_gr %>%
+  as.data.frame() %>%
+  filter(type == "gene")
+
+# Let's find the smallest genes using "arrange" function
+gencode_df %>% 
+  arrange(gencode_df$width) %>%
+  head()
+
+# Voila here is the shortest gene (8nt long ??): TRDD1
+# seqnames     start       end width strand source type score phase              gene_id       gene_type gene_name level      mgi_id          havana_gene transcript_id
+# 1    chr12 113454942 113454951    10      - HAVANA gene    NA    NA ENSMUSG00000094957.1       IG_D_gene   Ighd5-5     2 MGI:4937334 OTTMUSG00000051531.2          <NA>
+
+# now the longest gene using -arrange
+```{longest  gene in human genome}
+
+# Now let's find the Largest genes using arrange
+gencode_df %>%
+  arrange(-width) %>%
+  head()
+
+# seqnames     start       end   width strand source type score phase               gene_id      gene_type gene_name level      mgi_id           havana_gene transcript_id
+# 1     chr8 119910841 124345722 4434882      + HAVANA gene    NA    NA  ENSMUSG00000092329.1 protein_coding   Galnt2l     2 MGI:5141853  OTTMUSG00000026145.5          <NA>
+
+# We can also store the longest gene as an object with max function
+longest_gene <- gencode_df %>%
+  filter(width == max(width))
+
+# let's take a look at what information we have for this gene:
+longest_gene
+
+```
+
+Now let's find the total amount of the genome covered by exons.
+We start by defining total_exon_length of all exons in genome.
+
+# we need to use reduce to collapse all the exons that overlap into the longest exon
+# Exon 1.1  _____________
+# Exon 1.2      _____________
+# reduce    _________________
+# intersect     _________
+
+
+Ok let's find out what % of genome is exons!
+
+# What percetnage of the genome (3Billion) are exons?
+```{R % of genome that is exons}
+# first we will make an object of exons and reduce them as described above
+total_exon_length <- gencode_gr[gencode_gr$type == "exon"] %>%
+  # now reduce will take the union of overlapping exons 
+  GenomicRanges::reduce() %>% 
+  width() %>%
+  sum()
+
+# We now have the total bases covered by exons in the human genome. We also know
+# the human genome is 3.9B base pairs so let's find the percentage by division:
+
+total_exon_length/3.2e9
+# Boom we can see the mouse genome is about 4% exons (spoiler human genome is 4% too)!
+
+# if we want to plot the range of exon sizes we simply remove the sum function and plot:
+exon_lengths <- gencode_gr[gencode_gr$type == "exon"] %>%
+  # now reduce will take the union of overlapping exons 
+  GenomicRanges::reduce() 
+
+# plotting
+hist(width(exon_lengths), breaks = 100, xlim = c(0,10000))
+# we see most exons are under 2kb what is the average?
+
+avergage_exon_length <- mean(width(exon_lengths))
+# Cool the average exon length is 454nt (human 444nt) !
+```
+
+# what percentage of the genome is comprised of gene bodies?
+```{R % of genome that is Gene bodies}
+
+# To do this we simply change index in $type to == gene
+reduced_gene_bodies <- gencode_gr[gencode_gr$type == "gene"] %>%
+  GenomicRanges::reduce() %>%
+  width() %>%
+  sum()
+
+reduced_gene_bodies/3.2e9
+# Woah gene bodies take up 40% of the mouse genome !!
+
+# lets' see the range of sizes (take out width adn sum from above)
+gene_body_lengths <- gencode_gr[gencode_gr$type == "gene"] %>%
+  GenomicRanges::reduce()
+
+# plotting
+hist(width(gene_body_lengths), breaks = 100, xlim = c(0,500000))
+
+# we see most are less than 200Kb long (we previous saw longest was over 500Kb !)
+
+# what is the average length of a gene body?
+
+mean(width(gene_body_lengths))
+
+# answer is 26,522 or ~27Kb (38Kb human) !
+```
+
+####################
+Excercise
+###################
+
+Determine:
+
+1) How many CDS (Coding sequences there are in the genome)
+2) What is the longest and shortest CDS?
+3) What is the distribution of CDS lengths?
+

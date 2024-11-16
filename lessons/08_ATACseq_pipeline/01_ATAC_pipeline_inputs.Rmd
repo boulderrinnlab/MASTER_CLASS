@@ -1,0 +1,67 @@
+---
+title: "01_ATAC_pipeline_inputs"
+author: "JR"
+date: "2024-11-7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# GOAL: Run the ATACseq NF_CORE pipeline!
+We previously ran the NF_CORE RNAseq Pipeline.
+This required some specific input files such as 
+genome sequence, sample descriptions etc.
+
+The ATACseq analysis is both similar and different.
+Similar in that reads from Fastq files will be aligned to 
+the mouse genome. Instead of Salmon doing the quantification
+it will be a different program (read_counts). It will be even 
+more different in the analyses run to:
+
+1) Call peaks
+2) Merge peaks across samples
+3) Quantify reads inside a peak
+and much more !
+
+This will all be done by :
+#MACS 
+A program developed for ATACseq peak analysis and ChIPseq.
+
+# Let's run the pipeline !
+We are going to be using NF_CORE ATACseq version 2.1.2
+
+#Step 1 read documentation here:
+Documentation is here:
+https://nf-co.re/atacseq/2.1.2/
+
+#Step 2
+set up the input files needed !
+You will need:
+(a) run.sh 
+(b) design file 
+
+# Once you have this complete - run the pipeline !!
+# Hints:
+
+(a) We are using the same genome files as RNAseq
+
+(b) You will need a blacklist (this is a file of regions
+that are not good to align for ATACseq or ChIPseq) --
+It is in the same directory as the genomes.
+
+/scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25
+
+(c) There is a sample sheet with info of where the fastq files are located:
+/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq
+# NOTE we are only using the "control" sample fastq files. 
+These are samples in the sheet that have these col values: 
+"ESC	WT	control" or "ESC	KO	control"
+
+Also all the fastq's are there.
+
+(d) ATACseq pipeline also requires an out directory !
+
+
+

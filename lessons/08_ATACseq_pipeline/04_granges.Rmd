@@ -1,0 +1,238 @@
+---
+title: "04_granges"
+author: "JR"
+date: "2024-11-08"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# GOAL: level up to genomic Ranges (granges) to compare peak across samples and features.
+Our next objective is to make IRanges but for each of the chromosomes in the genome. This 
+will lead us further to wanting to use GRanges to understand what our genome is made up of. Or at least the annotations of the human genome and our peaks in GRange format.
+
+In short, we are going to start simple and then build up to being able to navigate
+massive amounts of genomic informaiton - to see what dox might be doing to chromatin.
+
+Let's get started !
+
+# Genomic Ranges (Granges)
+```{R GRanges}
+
+# Let's create a GRange using IRange logic. What we need is:
+# Chromosome, Strand, Ranges
+
+gr <- GRanges(seqnames = c("chrX"), strand = c("+", "-", "*"), ranges = IRanges(start = c(1,200, 1000), end = c(30, 299, 1200)))
+
+# let's see 
+gr
+
+# the first thing to note is we see a unique identifier for the X chromosome as
+# 'seqnames'(similar to names above)
+# 'ranges' (same as Iranges)
+# 'strand' 
+
+# we can see all the information with seqinfo
+seqinfo(gr)
+
+# we can see some additional place holders we have not changed such as the 
+# genome version or if the chromosome is circular. Seqlenght is the lenght of 
+# the chromosome. let's add this stuff !
+
+seqlengths(gr) <- c("chrX" = 100000)
+seqinfo(gr)
+
+# accessing seq lengths:
+seqlengths(gr)
+
+# we see that we only have one 'level' here for ChrX, let's add another chromosome
+seqlevels(gr) <- c("chrX", "chrY")
+seqlevels(gr)
+# now we can see that we have a level that contains both the X nad Y chromosome.
+
+
+# let's add genome:
+genome(gr) <- c("mm10")
+gr
+# now we have a genome, chromosome and strand associated with each feature!
+
+```
+
+
+Now let's read in two ATACseq peak files and find their overlaps!
+I have some set up to test in the data folder.
+
+# finding overlapping peaks in our actual data sets !!
+Let's compare our zero time point peaks files. We will start small
+with two peak files and learn the fundementals that we can then apply 
+to numerous peak files !
+
+Let's find all the peaks that overlap between 0_KO_R1 and 0_KO_R2
+```{R find overlaps}
+
+# setting file path to peak files mentioned above:
+peaks1 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
+
+
+peaks2 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak")
+
+peaks1 <- rtracklayer::import("<your_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
+
+peaks2 <- rtracklayer::import("<your_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak/ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak")
+# ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak
+
+
+# let's take a look:
+peaks1
+
+# for reference to last class looking at this file
+peaks_1_tsv <- read_tsv(file.path(basepath,path, "POLR2A_R1_peaks.broadPeak"), colnames = F)
+
+# now we can use the findOverlaps function to see what overlaps!
+?findOverlaps
+?import
+
+ovf <- findOverlaps(peaks1, peaks2)
+
+length(peaks1)
+length(peaks2)
+length(ovf)
+
+```
+# NOTE: the first file is query and second is the subject. 
+# Thus returns how many peak2 overlaps there were in peaks1 as written above.
+
+Let's take a look at the overlaps results.
+```{r digging into findOverlap results}
+summary(ovf)
+# 54170 overlaps -- same result as length
+summary(peaks1)
+# we had 82184 peaks in replicate 1
+summary(peaks2)
+# 67549 peaks in replicate 2
+
+# We have 54170 Overlaps but we need to consider 
+# the subject and query.
+```
+
+
+# Why this could matter !
+Thought exercise with real data 
+@to and @from 
+
+Imagine the scenario where you had more overlaps than one of 
+the peak files had peaks -- mind twister but happens
+
+Let's learn how this can happen and better understand finding overlaps!
+
+```{r crazy peaks}
+# loading in a situation to get to know query subject (@to and @ from)
+crazy_peaks1 <- rtracklayer::import("/scratch/Shares/rinnclass/CLASS_2023/data/data/POLR2A_consensus_peaks_filter.bed")
+
+crazy_peaks2 <- rtracklayer::import("/scratch/Shares/rinnclass/CLASS_2023/data/data/POLR2B_consensus_peaks_filter.bed")
+```
+
+# If not in class can also download here and import with same code above.
+```{bash download crazy peaks}
+wget https://www.dropbox.com/s/jenet8pg3t9npls/POLR2A_consensus_peaks_filter.bed?dl=0
+wget https://www.dropbox.com/s/vwhpecqxskbfuh4/POLR2B_consensus_peaks_filter.bed?dl=0
+```
+
+# Let's find overlaps between these two data sets!
+```{r bash download crazy peaks}
+# find overlaps
+crazy_ovf <- findOverlaps(crazy_peaks1, crazy_peaks2)
+
+# seeing how many overlaps
+length(crazy_peaks1)
+length(crazy_peaks2)
+summary(crazy_ovf)
+# What?? 11042 overlaps but there were only 10,255 peaks in crazy_peaks1
+```
+
+# How did we get more than 10,255 peak overlaps? Here are some possibilities:
+(1) It could be that all the peaks overlapped and maybe some did more than once
+(2) It could be that very few peaks in sample 1 but overlapped numerous times.
+
+These are very different observations!
+Let's learn some more Granges while solving this (a common activity)
+
+# Test 1 : width of peaks
+```{r digging into findOverlap results}
+# let's see with iranges "width function"
+summary(width(crazy_peaks1))
+summary(width(crazy_peaks2))
+
+# there peaks in peak1 are generally larger than peak2
+# thus a peak in peak1 could overlap multiple peaks in peak2 (vice versa too).
+
+```
+Result: peaks in crazy_peaks1 are about 2x bigger (consistent with multiple overlaps)
+
+
+# Test 2: Where did the overlaps come from? Sample (subject) 1 or 2 (query?
+We can get more information from then results of findOverlaps.
+@from : peaks from query file indexed into subject file
+@to: peaks from subject file indexed into query file.
+
+@from ---------       -----  -----
+
+@to  * * *       *                    *
+
+@from = 1 1 1
+@to = 1 2 3 
+
+```{r digging into findOverlap results}
+
+# let's understand this more deeply there are some subtilties we should cover
+# let's table the @from index
+table(crazy_ovf@from) 
+table(table(crazy_ovf@from))
+
+# SOLUTION !! This solves it the sum of these is 11K overlaps!
+# There are 6,388 unique peak overlaps -- maybe the result you
+# actually want to report
+
+# same for @to
+table(table(crazy_ovf@to))
+# huh most only have one overlap probably because:
+# the multiple overlaps in peak2 are assigned to 1 peak in peak1
+# 2 peaks in peak2 had overlap with 23 peaks in peak1
+
+```
+Result: crazy_peaks1 has much wider peaks and in turn more overlaps than peaks.
+Thus Crazy_peaks1 had 6,388 unique peaks and nearly half the overlaps came from
+peaks with multiple overlaps in crazy_peaks1. We can also conclude that the smaller 
+peaks in crazy_peaks2 were close by to each other -- causing the extra overalps.
+
+
+# Solution 2: count overlaps
+We can look at how overlaps are reported using: countOverlaps
+
+```{r countOverlaps for GRanges}
+
+# let's try countOverlaps
+crazy_ovf2 <-countOverlaps(crazy_peaks1, crazy_peaks2)
+# NOTE - INTEGER VALUE IN ENVIRONMENT 
+# There as many enteries as peaks in crazy_peaks1 (subject)
+# each entry has number of times that peak had an overlaps
+
+
+sum(crazy_ovf2)
+# cool this get's us to our 11,042 overlaps!
+
+
+# let's look with table
+table(crazy_ovf2)
+# if we sum the overlaps we get the 11,000 !
+
+# crazy_ovf2
+#   0    1    2    3    4    5    6    7    8    9   10   11   12   14 
+# 2242 6388  918  382  155   81   37   27    8    8    3    4    1    1 
+
+# 6388 + 2*(918) + 3(382) + 4*(155) ...... >> 11,042
+```

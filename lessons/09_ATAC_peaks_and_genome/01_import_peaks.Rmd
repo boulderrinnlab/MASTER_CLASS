@@ -12,13 +12,76 @@ knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 ```
 
-# GOAL: To start to analyze what happens to chromatin accessibility upon dox exposure.
-We now have peak files for each individual time point. Let's find out how well the peaks
-overlap across replicates. Then with some basics in overlaps compare the WT and KO control
-zero time points. (Note: we saw in the multiqc output that WT and KO seemed a bit different) -
-Let's go investigate our peak files !
+# GOAL: To learn how to import peak files as GRanges and find overlaps between samples!
+# For review see previous lesson: 08_ATACseq_pipeline/04_granges.Rmd
+We now have peak files for each individual time point. Let's learn how to import these files
+and analyze them for overlaps between samples.
 
 # Let's go Find your peak output files in: your_ATACseq_pipeline_output/bwa/merged_library>
+Let's start with a simple question: what is the overlap between WT_0 and KO_0?
+To do this we need rtarcklayer to import peak files as GRanges so we can find overlaps.
+
+# First let's load in the the WT_0 and KO_0 peak files from MACS2 
+```{r}
+# reading in WT_0 ATACseq peak calls !
+
+WT_0_Peaks <- rtracklayer::import("../08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak")
+
+# let's take a look at the data 
+view(WT_0_Peaks)
+
+# Now KO no dox (0 timepoint)
+KO_0_Peaks <- rtracklayer::import("../08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
+
+# Let's take a look at what information we have !
+view(KO_0_Peaks)
+view(WT_0_Peaks)
+
+# take a look at column names
+head(WT_0_Peaks)
+head(KO_0_Peaks)
+
+# Cool so we see a lot of data is present
+# IMPORTANT - note the pValue and qValue are the negative log10 of the pavlue
+#  -log10(p-value), the values are always positive numbers
+# For example, a value of 5 corresponds to an actual p-value of 10−510^{-5}10−5 - very significant
+# Significance starts around .893 (which is 0.05)
+
+```
+
+
+# Now let's explore how to overlap these files using findOverlaps!
+```{r findOverlpas}
+
+# Let's find overlaps using find overlaps function from genomic ranges GRanges
+# This will tell us how many peaks are the same in both 0 time point ATACseq experiments.
+ovf <- findOverlaps(WT_0_Peaks, KO_0_Peaks)
+
+# Looking at stats in console
+length(ovf)
+
+# Let's look at how many unique peaks there were in KO_0_Peaks (@to)
+length(unique(ovf@to))
+# So 53,853 peaks in KO_0_Peaks were unique comprising the 54,170 overlaps.
+
+# now let's look at WT_0_Peaks
+length(unique(ovf@from))
+# 53,928 peaks made up the 54,170 overlaps.
+
+
+# Let's look at how many had multiple overlaps
+table(table(ovf@from))
+# same for KO_0
+table(table(ovf@to))
+
+```
+# Overall not bad overlap between samples !
+Now let's learn a skill to import a bunch of peak files (all)
+as Genomic Ranges (GRanges)! We can do that with a couple handy 
+new tools for our kit.
+
+# Let's import all peak files !
+
 ```{r base file path to peaks}
 
 # First let's set a file path to where all our peak files are.
@@ -38,26 +101,30 @@ fl
 # let's try this to grab just one protein (can be the one from your group)
 fl_KO <- fl[grep("KO_control", fl)]
 
-# cool now we can subset this to any protein of our choosing
-
+# cool now we can subset this to any sample of our choosing - and directly connect file path
 pattern <- "(KO|WT)_control_\\d+"
 
 ```
 
-# extracting sample name from file name
+# extracting sample name from file name from all files !
 
-```{r}
+```{r extract sample name from file}
 
+# First set up a simple function to get warmed up !
+# We will go through each 
 sample_name <- sapply(fl, function(y){
  y <-  str_extract(y, "(KO|WT)_control_\\d+")
   
 })
 
+# Nice so we can see a start of a function that grabs name from file path
+
 ```
 
+# Let's make an import peaks function since this is a common/repetitive task
+```{r making import peaks function}
 
-```{r}
-
+# let's start with what we did above in side the function called "import_peaks"
 
 import_peaks <- function(consensus_file_path = peak_path) {
   peak_files <- list.files(consensus_file_path, full.names = T, pattern = ".broadPeak")
@@ -67,9 +134,7 @@ import_peaks <- function(consensus_file_path = peak_path) {
  y <-  str_extract(y, "(KO|WT)_control_\\d+")
     
     })
-  
 # NOW FOR LOOP TO IMPORT FILES
-  
 # setting an empty list "peak_list" to be filled by for loop
   peak_list <- c()
   
@@ -86,15 +151,24 @@ import_peaks <- function(consensus_file_path = peak_path) {
 }
 
 my_peaks <- import_peaks(consensus_file_path = peak_path)
-# what happened? Nothing ? Why ?
+# NICE we just imported all the peak files and names them - take a look!
+# Each row is a GRange object so this is a list of GRanges - so much packed in !
 
+# Le't see how many peaks each file has:
 num_peaks <- sapply(my_peaks, length) %>% as.data.frame()
 ```
+# Nice you now have a function called import_peaks! 
+You can point it to any directory with peak files and it 
+will load them all right up as GRanges and ready to do overlaps.
 
+*********************
+EXCERCISE
+*********************
 
-
-
-
+Create a function called import_peaks in your class_functions.R file
+So it can be sourced next class with source(.R Function)
+We previously called it 00_our_first_function_lesson.R 
+But now maybe a good time to rename it :) 
 
 
 

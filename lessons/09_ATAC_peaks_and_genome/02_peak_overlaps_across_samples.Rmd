@@ -34,11 +34,29 @@ my_peaks <- import_peaks(consensus_file_path = peak_path)
 # Nice so with a list of peak files and path to the folder we can load as many peak files as we need !
 num_peaks <- sapply(my_peaks, length) %>% as.data.frame
 view(num_peaks)
+
+# printing to compare later to filtered to cannonical chromosomes  
+print(num_peaks)
+
 ```
 
 # Now let's find a set of peaks that are common to all the samples !
 We previously looked at the overlap between WT_0 and KO_O now let's find the peaks that are in all files.
 Let's go through each step and then 
+
+
+# Step one Genomic ranges reduce function across the list of GRanges for each ATACseq peak file: 
+The GenomicRanges::reduce function in the GenomicRanges package merges overlapping or adjacent genomic ranges into a single range, depending on a specified rule. 
+# By default, it takes the outermost boundaries of all overlapping or adjacent ranges, creating the smallest set of non-overlapping ranges that span all the input ranges.
+
+# Let's put it to use and find peaks in all time points !
+```{r}
+
+
+
+
+```
+
 
 ```{r}
 

@@ -10,6 +10,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
+library(GenomicRanges)
 ```
 
 # GOAL: To learn how to import peak files as GRanges and find overlaps between samples!
@@ -51,30 +52,64 @@ head(KO_0_Peaks)
 # IMPORTANT: our peak files also contain non chromosomal contig regions of the genome !!
 # IMPORTANT: to filter out non-cannonical chromsomes.
 
+# Let's filter to cannonical chromosomes 
+```{r}
+#Let's take a look at one file to start (KO_0_Peaks):
+seqnames(KO_0_Peaks)
+# Lots of GL contigs we don't want, but we want to grab everything with a "chr" at start!
+
+# Let's use grep to grab the enteries that start with "chr" indicated by "^chr"
+KO_0_chr_peaks <- KO_0_Peaks[grepl("^chr", as.character(seqnames(KO_0_Peaks)))]
+WT_0_chr_peaks <- WT_0_Peaks[grepl("^chr", as.character(seqnames(WT_0_Peaks)))]
+
+# Let's take a look:
+seqnames(KO_0_chr_peaks)
+# We see now our seqnames values all start with chr
+# don't be scared that the levels are still there for non chr contigs
+seqlevels(KO_0_chr_peaks)
+
+```
+
+
 # Now let's explore how to overlap these files using findOverlaps!
 ```{r findOverlpas}
-
 # Let's find overlaps using find overlaps function from genomic ranges GRanges
 # This will tell us how many peaks are the same in both 0 time point ATACseq experiments.
 ovf <- findOverlaps(WT_0_Peaks, KO_0_Peaks)
-
 # Looking at stats in console
 length(ovf)
 
+# Let's do the same for our chromosome only files:
+ovf_chr <- findOverlaps(WT_0_chr_peaks, KO_0_chr_peaks)
+
+# Let's compare
+length(ovf)
+length(ovf_chr)
+
+# interesting there are 54,170 with contigs and 54,064 with just chr
+# pretty close but GOOD TO NOTE !
+# We will move forward with the chromosome filtered versions for class !
+```
+
+# Now let's compare the query file (first @from) to the subject file (second @to) 
+
+```{r findOverlpas}
 # Let's look at how many unique peaks there were in KO_0_Peaks (@to)
-length(unique(ovf@to))
-# So 53,853 peaks in KO_0_Peaks were unique comprising the 54,170 overlaps.
+length(unique(ovf_chr@to))
+# So 53,747 peaks in KO_0_Peaks were unique comprising the 54,064 overlaps.
 
 # now let's look at WT_0_Peaks
-length(unique(ovf@from))
-# 53,928 peaks made up the 54,170 overlaps.
+length(unique(ovf_chr@from))
+# 53,827 peaks made up the 54,064 overlaps.
 
 
 # Let's look at how many had multiple overlaps
-table(table(ovf@from))
+table(table(ovf_chr@from))
 # same for KO_0
-table(table(ovf@to))
+table(table(ovf_chr@to))
 
+# Ok numbers add up and not unusual (like crazy peaks - remember them)
+# Meaning it's about the same number of overlaps both ways with not to many multiple overlaps
 ```
 # Overall not bad overlap between samples !
 Now let's learn a skill to import a bunch of peak files (all)
@@ -118,6 +153,7 @@ sample_name <- sapply(fl, function(y){
   
 })
 
+sample_name
 # Nice so we can see a start of a function that grabs name from file path
 
 ```
@@ -125,42 +161,59 @@ sample_name <- sapply(fl, function(y){
 # Let's make an import peaks function since this is a common/repetitive task
 ```{r making import peaks function}
 
-# let's start with what we did above in side the function called "import_peaks"
+# let's start with what we did above and create a custom function called "import_peaks"
 
-import_peaks <- function(consensus_file_path = peak_path) {
-  peak_files <- list.files(consensus_file_path, full.names = T, pattern = ".broadPeak")
+import_peaks <- function(consensus_file_path) {
   
-  # now extract unique sample names directly from file name
-  sample_name <- sapply(fl, function(y){
- y <-  str_extract(y, "(KO|WT)_control_\\d+")
-    
-    })
-# NOW FOR LOOP TO IMPORT FILES
-# setting an empty list "peak_list" to be filled by for loop
-  peak_list <- c()
+  # List all MACS2 broadPeak files in the directory
+  peak_files <- list.files(consensus_file_path, full.names = TRUE, pattern = ".broadPeak")
   
-  # the for loop !
-  for(i in 1:length(peak_files)) {
-    # Import peaks
+  # Extract sample names directly from file names
+  sample_names <- sapply(peak_files, function(file) {
+    str_extract(file, "(KO|WT)_control_\\d+")
+  })
+  
+  # Initialize an empty list to store filtered GRanges objects
+  peak_list <- list()
+  
+  # Import, filter, and store GRanges objects
+  for (i in seq_along(peak_files)) {
+    # Import peaks as GRanges
     peaks <- rtracklayer::import(peak_files[i])
-    # Append this GRanges object to the of the list peak_list we set empty above.
-    peak_list <- c(peak_list, peaks)
-    # Name the list elements by their TF name.
-    names(peak_list)[length(peak_list)] <- sample_name[i]
+    
+    # Filter to keep only seqnames starting with "chr"
+    filtered_peaks <- peaks[grepl("^chr", as.character(seqnames(peaks)))]
+    
+    # Add filtered peaks to the list with a sample-specific name
+    peak_list[[sample_names[i]]] <- filtered_peaks
   }
+  
   return(peak_list)
 }
+```
 
+
+# Let's test run our function !
+```{r running import peaks function}
+
+# Let's run our new custom function import_peaks
 my_peaks <- import_peaks(consensus_file_path = peak_path)
+
 # NICE we just imported all the peak files and names them - take a look!
 # Each row is a GRange object so this is a list of GRanges - so much packed in !
 
 # Le't see how many peaks each file has:
 num_peaks <- sapply(my_peaks, length) %>% as.data.frame()
+
+# Double checking we only have cannonical chromosomes by indexing one of the GRanges in the list
+seqnames(my_peaks$KO_control_0)
+
+# Nice good to go !
 ```
 # Nice you now have a function called import_peaks! 
 You can point it to any directory with peak files and it 
 will load them all right up as GRanges and ready to do overlaps.
+
 
 *********************
 EXCERCISE

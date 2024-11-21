@@ -163,31 +163,35 @@ LFCplot <- function(genes_of_interest, res_df) {
 #' Any peak file can be loaded in and made into a GRanges from one file 
 #' to thouusands of peak files. This function will load and get into GRange format.
 #' 
-#' @param peak_file, file path to the peak files.  
-#' @param  regex, there is a regex to get "sample name" that is needed in function
+#' @param peak_file, file path to the peak files - generic name "consensus_file_path".  
+#' @param  regex, # Warning custom to application # there is a regex to get "sample name" for input into function 
 #' 
 #' 
-import_peaks <- function(consensus_file_path = peak_path) {
-  peak_files <- list.files(consensus_file_path, full.names = T, pattern = ".broadPeak")
+import_peaks <- function(consensus_file_path) {
   
-  # now extract unique sample names directly from file name
-  sample_name <- sapply(fl, function(y){
-    y <-  str_extract(y, "(KO|WT)_control_\\d+")
-    
+  # List all MACS2 broadPeak files in the directory
+  peak_files <- list.files(consensus_file_path, full.names = TRUE, pattern = ".broadPeak")
+  
+  # Extract sample names directly from file names
+  sample_names <- sapply(peak_files, function(file) {
+    str_extract(file, "(KO|WT)_control_\\d+")
   })
-  # NOW FOR LOOP TO IMPORT FILES
-  # setting an empty list "peak_list" to be filled by for loop
-  peak_list <- c()
   
-  # the for loop !
-  for(i in 1:length(peak_files)) {
-    # Import peaks
+  # Initialize an empty list to store filtered GRanges objects
+  peak_list <- list()
+  
+  # Import, filter, and store GRanges objects
+  for (i in seq_along(peak_files)) {
+    # Import peaks as GRanges
     peaks <- rtracklayer::import(peak_files[i])
-    # Append this GRanges object to the of the list peak_list we set empty above.
-    peak_list <- c(peak_list, peaks)
-    # Name the list elements by their TF name.
-    names(peak_list)[length(peak_list)] <- sample_name[i]
+    
+    # Filter to keep only seqnames starting with "chr"
+    filtered_peaks <- peaks[grepl("^chr", as.character(seqnames(peaks)))]
+    
+    # Add filtered peaks to the list with a sample-specific name
+    peak_list[[sample_names[i]]] <- filtered_peaks
   }
+  
   return(peak_list)
 }
 

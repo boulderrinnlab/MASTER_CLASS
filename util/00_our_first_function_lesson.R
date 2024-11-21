@@ -153,3 +153,81 @@ LFCplot <- function(genes_of_interest, res_df) {
   
   return(plot)
 }
+
+
+# ATACSEQ IMPORT PEAKS
+
+#' FUNCTION to import peak files from ATACseq into List of GRanges objects
+#'
+#' @description 
+#' Any peak file can be loaded in and made into a GRanges from one file 
+#' to thouusands of peak files. This function will load and get into GRange format.
+#' 
+#' @param peak_file, file path to the peak files.  
+#' @param  regex, there is a regex to get "sample name" that is needed in function
+#' 
+#' 
+import_peaks <- function(consensus_file_path = peak_path) {
+  peak_files <- list.files(consensus_file_path, full.names = T, pattern = ".broadPeak")
+  
+  # now extract unique sample names directly from file name
+  sample_name <- sapply(fl, function(y){
+    y <-  str_extract(y, "(KO|WT)_control_\\d+")
+    
+  })
+  # NOW FOR LOOP TO IMPORT FILES
+  # setting an empty list "peak_list" to be filled by for loop
+  peak_list <- c()
+  
+  # the for loop !
+  for(i in 1:length(peak_files)) {
+    # Import peaks
+    peaks <- rtracklayer::import(peak_files[i])
+    # Append this GRanges object to the of the list peak_list we set empty above.
+    peak_list <- c(peak_list, peaks)
+    # Name the list elements by their TF name.
+    names(peak_list)[length(peak_list)] <- sample_name[i]
+  }
+  return(peak_list)
+}
+
+
+
+
+
+#' CREATE CONSENSUS PEAKS
+#' this function will take multiple replicate .broadPeak files (also narrow)
+#' find peaks that overlap in all the replicates. 
+#' @description 
+#' input set of chipseq replicate peak files
+#' this function then creates one merged file peaks in all samples
+#' @param sample_name
+#' This will be extracted with names(GR_list) in the lapply at end of fun
+#' You will need a "dbps" or some object for the lapply that has the 
+#' name of each dbp in the named GRanges list
+#' 
+#' @param peak_list
+#' Named list of GRanges for each chipseq replicate
+#' peak_list can be generated using import_peaks function above
+
+consensus_from_reduced <- function(dbp, peak_list) {
+  dbp_peaks <- peak_list[grepl(as.character(dbp), names(peak_list))]
+  suppressWarnings(all_peaks <- GenomicRanges::reduce(unlist(as(dbp_peaks, "GRangesList"))))
+  all_peaks <- all_peaks[grepl("chr", seqnames(all_peaks))]
+  
+  # peak_exists <- lapply(dbp_peaks, function(x) {
+  #   as.numeric(countOverlaps(all_peaks, x) > 0))
+  # }) %>%
+  # bind_rows() OR bind_cols()
+  peak_exists <- matrix(NA, nrow = length(all_peaks), ncol = length(dbp_peaks))
+  for(i in 1:length(dbp_peaks)) {
+    suppressWarnings(peak_exists[,i] <- as.numeric(countOverlaps(all_peaks, dbp_peaks[[i]]) > 0))
+  }
+  
+  # filter to consensus requiring peaks to be in all replicates
+  dbp_consensus <- all_peaks[rowSums(peak_exists) == ncol(peak_exists)]
+  # Required only two replicates == dbp_consensus <- all_peaks[rowSums(peak_exists) > 1]
+  return(dbp_consensus)
+}
+
+

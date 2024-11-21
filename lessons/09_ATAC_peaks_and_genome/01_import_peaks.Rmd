@@ -48,7 +48,8 @@ head(KO_0_Peaks)
 # Significance starts around .893 (which is 0.05)
 
 ```
-
+# IMPORTANT: our peak files also contain non chromosomal contig regions of the genome !!
+# IMPORTANT: to filter out non-cannonical chromsomes.
 
 # Now let's explore how to overlap these files using findOverlaps!
 ```{r findOverlpas}

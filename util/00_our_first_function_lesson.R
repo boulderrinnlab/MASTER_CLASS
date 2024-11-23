@@ -1,5 +1,9 @@
 #! Function Lesson !!
 
+###################################
+# Our first function - multiplication
+###################################
+
 # This function has two parameters, and we have to let R know (x & y)
 # function is inside { }, then we need a 'return' to get the answer
 fun <- function(x, y) {
@@ -31,6 +35,11 @@ fun <- function(x, y) {
 
 # Awesome we can now source this function and it's well documented !
 # Let's do the same for our function to plot a avg and sd TPM values:
+
+
+###################################
+# PLOT TPM values 
+###################################
 
 #' FUNCTION to plot TPM values for genes of interest
 #'
@@ -88,7 +97,11 @@ plot_gene_expression <- function(genes_of_interest, df) {
 
 # plot_gene_expression(genes_of_interest, TPM_filtered)
 
-# LFCplot.R
+
+
+###################################
+# Log fold change plot from Deseq2 values
+###################################
 
 #' LFCplot: A Function to Plot Log2 Fold Changes Over Time
 #'
@@ -155,7 +168,10 @@ LFCplot <- function(genes_of_interest, res_df) {
 }
 
 
+
+###################################
 # ATACSEQ IMPORT PEAKS
+###################################
 
 #' FUNCTION to import peak files from ATACseq into List of GRanges objects
 #'
@@ -196,42 +212,70 @@ import_peaks <- function(consensus_file_path) {
 }
 
 
+###################################
+# FIND COMMON PEAKS
+###################################
 
-
-
-#' CREATE CONSENSUS PEAKS
-#' this function will take multiple replicate .broadPeak files (also narrow)
-#' find peaks that overlap in all the replicates. 
+#' FUNCTION to identify common peaks across multiple ATAC-seq samples
+#'
 #' @description 
-#' input set of chipseq replicate peak files
-#' this function then creates one merged file peaks in all samples
-#' @param sample_name
-#' This will be extracted with names(GR_list) in the lapply at end of fun
-#' You will need a "dbps" or some object for the lapply that has the 
-#' name of each dbp in the named GRanges list
+#' This function processes a list of GRanges objects, where each GRanges represents 
+#' ATAC-seq peaks from a single sample. It identifies genomic regions (peaks) 
+#' that are shared across all samples by iteratively calculating overlaps. 
+#' The resulting common peaks are labeled with unique identifiers for downstream 
+#' analysis or visualization in tools like IGV.
+#'
+#' @param gr_list A list of GRanges objects. Each GRanges represents the peaks from 
+#'                a single ATAC-seq sample. The list should have names corresponding 
+#'                to the sample identifiers (e.g., "sample1", "sample2", etc.).
 #' 
-#' @param peak_list
-#' Named list of GRanges for each chipseq replicate
-#' peak_list can be generated using import_peaks function above
-
-consensus_from_reduced <- function(dbp, peak_list) {
-  dbp_peaks <- peak_list[grepl(as.character(dbp), names(peak_list))]
-  suppressWarnings(all_peaks <- GenomicRanges::reduce(unlist(as(dbp_peaks, "GRangesList"))))
-  all_peaks <- all_peaks[grepl("chr", seqnames(all_peaks))]
-  
-  # peak_exists <- lapply(dbp_peaks, function(x) {
-  #   as.numeric(countOverlaps(all_peaks, x) > 0))
-  # }) %>%
-  # bind_rows() OR bind_cols()
-  peak_exists <- matrix(NA, nrow = length(all_peaks), ncol = length(dbp_peaks))
-  for(i in 1:length(dbp_peaks)) {
-    suppressWarnings(peak_exists[,i] <- as.numeric(countOverlaps(all_peaks, dbp_peaks[[i]]) > 0))
+#' @return A GRanges object containing the genomic intervals (peaks) that are common 
+#'         across all input GRanges objects. Each interval is labeled with a unique 
+#'         identifier in the metadata column `name`, using the format "common_peak_<number>".
+#'
+#' @details 
+#' 1. The function validates that the input is a list of GRanges objects.
+#' 2. It iteratively identifies overlaps across all GRanges objects in the list.
+#' 3. Only intervals shared across all samples are retained at each step.
+#' 4. The resulting peaks are assigned unique names for easy tracking.
+#'
+#' @examples
+#' # Example list of GRanges objects
+#' gr_list <- list(
+#'   sample1 = GRanges(seqnames = "chr1", ranges = IRanges(start = c(1, 50), end = c(20, 70))),
+#'   sample2 = GRanges(seqnames = "chr1", ranges = IRanges(start = c(10, 60), end = c(30, 80))),
+#'   sample3 = GRanges(seqnames = "chr1", ranges = IRanges(start = c(15, 55), end = c(25, 75)))
+#' )
+#'
+#' # Find common peaks
+#' common_peaks <- find_common_peaks(gr_list)
+#'
+#' # View results
+#' print(common_peaks)
+#'
+#' @export
+find_common_peaks <- function(gr_list) {
+  # Validate input
+  if (!is.list(gr_list) || !all(sapply(gr_list, inherits, "GRanges"))) {
+    stop("Input must be a list of GRanges objects.")
   }
   
-  # filter to consensus requiring peaks to be in all replicates
-  dbp_consensus <- all_peaks[rowSums(peak_exists) == ncol(peak_exists)]
-  # Required only two replicates == dbp_consensus <- all_peaks[rowSums(peak_exists) > 1]
-  return(dbp_consensus)
+  # Start with the first GRanges object
+  common_peaks <- gr_list[[1]]
+  
+  # Iteratively find overlaps across all GRanges objects
+  for (i in 2:length(gr_list)) {
+    current_gr <- gr_list[[i]]
+    
+    # Find overlaps
+    overlaps <- findOverlaps(common_peaks, current_gr)
+    
+    # Subset to overlapping regions
+    common_peaks <- subsetByOverlaps(common_peaks, current_gr)
+  }
+  
+  # Assign custom names to the common peaks
+  mcols(common_peaks)$name <- paste0("common_peak_", seq_along(common_peaks))
+  
+  return(common_peaks)
 }
-
-

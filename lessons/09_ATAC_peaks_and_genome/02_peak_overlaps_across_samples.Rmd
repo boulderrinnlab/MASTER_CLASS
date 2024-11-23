@@ -9,19 +9,26 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+source("../../util/00_our_first_function_lesson.R")
 ```
 
-# GOAL : #################
+# GOAL : Find peaks that are present in all samples
+We will further home our overlap skills here while asking the question:
+How many peaks overlap in all samples? We previously did one overlap between
+two files but we have 12 comparisons to do - How do we do that??
 
-```{r setting up information to load peak files}
+# Let's start by setting up file path to ATAC peak files. 
+```{r setting up information to load peak files as GRange List}
 
 # sourcing import peaks function 
 source("../../util/00_our_first_function_lesson.R")
 
 # establishing peak path to the dir with MACS2 output peak files from NF_CORE ATACseq pipeline
-peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
 
-# creating a file list also needed for import_peaks function
+peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
+# peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+# creating a file list also needed for import_peaks function to get sample name associated with file
 fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
 ```
 
@@ -44,14 +51,12 @@ print(num_peaks)
 We previously looked at the overlap between WT_0 and KO_O now let's find the peaks that are in all files.
 Let's go through each step and then 
 
-
-# Step one Genomic ranges reduce function across the list of GRanges for each ATACseq peak file: 
-The GenomicRanges::reduce function in the GenomicRanges package merges overlapping or adjacent genomic ranges into a single range, depending on a specified rule. 
-# By default, it takes the outermost boundaries of all overlapping or adjacent ranges, creating the smallest set of non-overlapping ranges that span all the input ranges.
-
-# Let's put it to use and find peaks in all time points !
+# strategy: use a for loop to iteratively find overlaps ! 
+Let's do this and start to build a function to find overlaps automatically!
+First, let's learn some reproducibility measures of grabbing names from files to ensure we know what they are.
 ```{r all time point consensus peaks}
-# making a list of peak files 
+
+# making a list of peak files (same as above - starting from scratch)
 fl <- list.files(peak_path, 
                  full.names=TRUE, pattern = ".broadPeak")
 
@@ -66,21 +71,26 @@ sample_name <- sapply(fl, function(y){
 # Also to count how many peaks are in each file (number of overlaps)
 ```
 
+# Create for loop and function at the same time !!
+Now we are going to create a function to find overlaps between
+all files in a list of GRanges (in our case right now my_peaks).
+Let's create a handy function to overlap peaks!
 
-```{r}
+```{r find_common_peaks function }
 
-find_common_peaks <- function(peak_list) {
+# starting function named "find_common_peaks" parameter 
+find_common_peaks <- function(gr_list) {
   # Validate input
-  if (!is.list(peak_list) || !all(sapply(peak_list, inherits, "GRanges"))) {
+  if (!is.list(gr_list) || !all(sapply(gr_list, inherits, "GRanges"))) {
     stop("Input must be a list of GRanges objects.")
   }
   
   # Start with the first GRanges object
-  common_peaks <- peak_list[[1]]
+  common_peaks <- gr_list[[1]]
   
   # Iteratively find overlaps across all GRanges objects
-  for (i in 2:length(peak_list)) {
-    current_gr <- peak_list[[i]]
+  for (i in 2:length(gr_list)) {
+    current_gr <- gr_list[[i]]
     
     # Find overlaps
     overlaps <- findOverlaps(common_peaks, current_gr)
@@ -98,65 +108,72 @@ find_common_peaks <- function(peak_list) {
 # Let's give it a test run !
 
 common_peaks <- find_common_peaks(my_peaks)
-
+common_peaks@elementMetadata@listData[["name"]]
 ```
 
-# Take a moment and make this function in your .Rscrip in util
+# IMEDIATE TASK: Take a moment and make this function in your .Rscrip in util
 
-Now back to our peaks. Let's take a look at what our common peaks looks like
-relative to an individual peak file (or two :).
+(a) Add this function above to your .Rscript in util directory. 
+(b) Add description to the .Rscript
+(c) clean environment - source .Rscript then run with just this code:
+
+```{r (c) code to test function}
+
+# peak file "consensus_path" parameter of import_peaks function
+peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
+# peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+# source function
+source("../../util/00_our_first_function_lesson.R")
+
+# make fl
+fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
+
+# import peaks !
+my_peaks <- import_peaks(consensus_file_path = peak_path)
+
+# test common_peaks function 
+common_peaks <- find_common_peaks(my_peaks)
+
+```
+NICE !! In the future that is all you will have to run (5 lines of code !!)
+HINT: This is a good example of what your final .RMD could look like above - nice and clean!
+
+# Now: let's prepare and view peak calls in IGV to do some analysis in the following steps:
 
 # (1) We need to make our common peaks object into a .BED file to view in IGV.
 Let's make a handy script to make peak objects in environment into viewable files !
 
-```{r}
+```{r exporting common_peaks GRanges to .bed file for viewing in IGV}
 
-output_bed <- "common_peaks.bed"
+# setting export file path
+output_bed <- "results/common_peaks.bed"
 
 # Export the GRanges object to a BED file
 rtracklayer::export(common_peaks, con = output_bed, format = "BED")
 
-cat("Exported common peaks to:", output_bed, "\n")
-
-
+# That's it now we can visualize the common_peaks you just created!
 ```
+# (2) Now to explore and visualize our peak calls with raw data
+You will need to use cyberduck/filezilla to transfer to your local computer:
+(a) your bigWig files for each ATACseq file run (this may take 10 min or so)
+  - hint(/bwa/merged_library)
+(b) common_peaks.bed file just created.
 
-
-# (2) Load in the common peaks and individual ATAC bigwig files to IGV and investigate:
+# (3) Load in the common peaks and individual ATAC bigwig files to IGV and investigate:
 (a) Do the peaks look like they are common in all samples?
 (b) search around for good peaks and note some examples (the coordinates on IGV - put in .RMD)
 (c) What is weird about Firre? 
 (d) how many peaks are in your common_peaks file versus the one produced by NF_CORE pipeline?
   - Hint <output_dir> /bwa/merged_library/macs2/broadPeak/consensus/consensus_peaks.mLb.clN.boolean.intersect.plot.pdf
 
-# (3) Now load in the consensus peak file that has any peak in any sample and compare in IGV
+# (4) Now load in the consensus peak file that has any peak in any sample and compare in IGV
 (a) Find a region where there is a common peak next to a peak that is not common but called by pipeline
 (b) Look at some common peaks and see how often a consensus_peak is present - would expect almost all right?
+(c) what is the difference you notice between the boundary length of consensus -vs- common? Are the peaks called bigger or smaller?
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Congratulations you just completed one of the most important tasks in computational biology:
+Running scripts to find overlaps across samples and visualizing what that looks like in raw data!
+This is useful in almost all applications - always check back to raw data - well done !!
 
 

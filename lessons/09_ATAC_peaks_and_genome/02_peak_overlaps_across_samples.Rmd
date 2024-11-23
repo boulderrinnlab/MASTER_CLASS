@@ -50,9 +50,118 @@ The GenomicRanges::reduce function in the GenomicRanges package merges overlappi
 # By default, it takes the outermost boundaries of all overlapping or adjacent ranges, creating the smallest set of non-overlapping ranges that span all the input ranges.
 
 # Let's put it to use and find peaks in all time points !
+```{r all time point consensus peaks}
+# making a list of peak files 
+fl <- list.files(peak_path, 
+                 full.names=TRUE, pattern = ".broadPeak")
+
+# Extracting sample name from file name
+sample_name <- sapply(fl, function(y){
+ y <-  str_extract(y, "(KO|WT)_control_\\d+")
+  
+})
+
+# Now we have the needed inputs to make a function !
+# Let's make a fucntion to create peaks in all input files.
+# Also to count how many peaks are in each file (number of overlaps)
+```
+
+
 ```{r}
 
+# (1) input parameter "gr_list" or my_peaks currently.
+  find_common_peaks <- function(gr_list) {
 
+# (2) reduce any overlapping peaks in each file
+  # lapply() will loop us through each entry in our gr_list
+  # Reduce each GRanges so there are no overlapping intervals
+  reduced_list <- lapply(gr_list, reduce)
+  
+# (3) now find overlaps across all samples
+  common_peaks <- reduced_list[[1]]
+ # Sequentially find overlaps with the next GRanges object
+  # Sequentially find overlaps with the next GRanges object
+  for (i in 2:length(gr_list)) {
+    # Find overlaps between common_peaks and the current GRanges
+    overlaps <- findOverlaps(common_peaks, gr_list[[i]])
+    
+    # Subset the overlapping ranges
+    common_peaks <- common_peaks[queryHits(overlaps)]
+  }
+  
+  # Reduce the resulting ranges to merge the overlapping regions
+  common_peaks <- reduce(common_peaks)
+  
+  return(common_peaks)
+}
+
+# Find the peaks that overlap in all samples
+common_peaks <- find_common_peaks(gr_list)
+
+# Print the result
+common_peaks
+```
+
+
+
+
+
+
+
+
+
+# Creating consensus peak and overlap counting function : create_consensus_reduced
+First the parameters:
+```{r}
+
+#' CREATE CONSENSUS PEAKS
+#' this function will take multiple replicate .broadPeak files (also narrow)
+#' find peaks that overlap in all the replicates. 
+#' @description 
+#' input set of chipseq replicate peak files
+#' this function then creates one merged file peaks in all samples
+#' @param sample_name
+#' This will be extracted with names(GR_list) in the lapply at end of fun
+#' You will need a "dbps" or some object for the lapply that has the 
+#' name of each dbp in the named GRanges list
+#' 
+#' @param my_peaks
+#' Named list of GRanges for each ATACseq file
+#' peak_list can be generated using "import_peaks" we created previously
+
+consensus_from_reduced <- function(sample_name, my_peaks) {
+  atac_peaks <- sample_name[grepl(as.character(sample_name), names(my_peaks))]
+  suppressWarnings(all_peaks <- GenomicRanges::reduce(unlist(as(atac_peaks, my_peaks))))
+  all_peaks <- all_peaks[grepl("chr", seqnames(all_peaks))]
+  
+  # peak_exists <- lapply(dbp_peaks, function(x) {
+  #   as.numeric(countOverlaps(all_peaks, x) > 0))
+  # }) %>%
+  # bind_rows() OR bind_cols()
+  peak_exists <- matrix(NA, nrow = length(all_peaks), ncol = length(my_peaks))
+  for(i in 1:length(atac_peaks)) {
+    suppressWarnings(peak_exists[,i] <- as.numeric(countOverlaps(my_peaks, atac_peaks[[i]]) > 0))
+  }
+
+# filter to consensus requiring peaks to be in all replicates
+dbp_consensus <- all_peaks[rowSums(peak_exists) == ncol(peak_exists)]
+# Required only two replicates == dbp_consensus <- all_peaks[rowSums(peak_exists) > 1]
+return(dbp_consensus)
+}
+
+test <- consensus_from_reduced(sample_name, my_peaks)
+```
+
+
+
+
+```{r all time point consensus peaks}
+all_peaks <- GenomicRanges::reduce(unlist(as(sample_name, my_peaks)))
+
+suppressWarnings
+test <- GenomicRanges::reduce(unlist(as(sample_name, "GRangesList"
+                                        
+                                        
 
 
 ```

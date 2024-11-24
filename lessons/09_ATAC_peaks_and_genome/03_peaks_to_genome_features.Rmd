@@ -1,0 +1,115 @@
+---
+title: "03_Peak_genome_features"
+author: "JR"
+date: "2024-11-24"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("../../util/00_our_first_function_lesson.R")
+```
+
+# Goal: To determine where in the genome our peaks live!
+We will start to explore where our ATACseq peaks reside in the human genome
+and what features they correspond to (e.g., mRNAs, lincRNA and many more to explore)
+
+# Note our common_peaks object is peaks present in all samples.
+So for now we are investigating where are the regions of chromatin
+that remain accessible despite dox exposure across any time point.
+
+This is a really cool question of where do these robust and reliable peaks reside?
+
+# Let's find out where in the genome our peaks are through these steps:
+
+# Step (1) : create "common_peaks" a list of peak files in the format of GRanges
+We are basically starting where we left off last lesson!
+
+```{r create my_peaks GRange List using import_peaks custom function}
+
+# peak file "consensus_path" parameter of import_peaks function
+peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
+#peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+# make file list (fl)
+fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
+
+# import peaks !
+my_peaks <- import_peaks(consensus_file_path = peak_path)
+
+# test common_peaks function 
+common_peaks <- find_common_peaks(my_peaks)
+
+```
+Sweet! our env is geared up for overlaps on the peak side 
+- now for genomic annotation GRanges
+
+Here we will import the gencode genome annotation as a GRanges.
+Then we will subset it to "genes", "mRNA", "lncRNA" 
+This will allow us to determine how many common_peaks are 
+near these genome features. Then the same concept applies to all genome features!
+
+We have done this before but will start from scratch to refresh:
+# Step (2) Creating mouse gene, lincrna, mRNA annotation GRange objects
+
+```{r create mouse genome annotation for genes, lincRNA, mRNA in GRanges format}
+
+# Loading gencode genome annotation as GRanges (takes 5 min - will save at end)
+gencode_gr_mouse <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf")
+
+# making subset to just gene objects:
+gencode_genes_mouse <- gencode_gr[gencode_gr_mouse$type == "gene"] 
+
+# mrna_genes
+mrna_genes <- gencode_genes_mouse[gencode_genes_mouse$gene_type %in% "protein_coding"]
+
+# lincrna_genes
+lincrna_genes <- gencode_genes_mouse[gencode_genes_mouse$gene_type %in% "lincRNA"]
+
+```
+# Result: 55,401 genes, 21,895 mRNA, 5,629 lincRNAs in mouse genocde annotation 
+# Result this means that half of the gene annotations are in other catagories such as "processed_transcripts"
+
+Cool, so we have learned more about the number of genes in the mouse genome.
+
+# Step (3) : Promoters object from TSS to upstream and downstream
+This is very subjective to what "window" you create a promter around a TSS. 
+So we will start with a typical window to learn, while analyzing our ATACseq data!
+We did this previously in 08_ATACseq_Pipeline/05_ & 06_ 
+
+A good reference window is 2Kb upstream and 2Kb Downstream for transcriptional regulatory events.
+Let's make a promoter window around each of the gene types we just loaded !
+
+```{r Creating promoter GRanges for genes, lncrna, mrNA}
+
+# lncrna_mrna_promoters
+lncrna_mrna_promoters <- promoters(mrna_lncrna_genes, upstream = 1000, downstream = 1000)
+
+# gene_promoters
+gene_promoters <- promoters(gencode_genes_mouse, upstream = 2000, downstream = 2000)
+
+# lncRNA gene_promoters
+lincrna_gene_promoters <- promoters(lincrna_genes, upstream = 2000, downstream = 2000)
+
+# mrna_lncRNA_promoters
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

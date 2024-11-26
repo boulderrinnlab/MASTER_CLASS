@@ -85,7 +85,10 @@ Let's make a promoter window around each of the gene types we just loaded !
 ```{r Creating promoter GRanges for genes, lncrna, mrNA}
 
 # lncrna_mrna_promoters
-lncrna_mrna_promoters <- promoters(mrna_lncrna_genes, upstream = 1000, downstream = 1000)
+lncrna_mrna_promoters <- promoters(mrna_lncrna_genes, upstream = 2000, downstream = 2000)
+
+# mrna_promoters
+mrna_promoters <- promoters(mrna_genes, upstream = 2000, downstream = 2000)
 
 # gene_promoters
 gene_promoters <- promoters(gencode_genes_mouse, upstream = 2000, downstream = 2000)
@@ -93,20 +96,145 @@ gene_promoters <- promoters(gencode_genes_mouse, upstream = 2000, downstream = 2
 # lncRNA gene_promoters
 lincrna_gene_promoters <- promoters(lincrna_genes, upstream = 2000, downstream = 2000)
 
-# mrna_lncRNA_promoters
+# Nice now we have a lot of Genome Features in GRanges format - ready to start overlapping.
+```
+
+# Now we are set to start overlapping.
+Let's ask several questions to explore the data and learn some skills !
+
+# Question 1: How many common peaks overlap mRNA vs lincRNA promoters
+```{r ATAC Peak Overlap lincRNA and mRNA promoters}
+
+lincrna_atac_ov <- findOverlaps(lincrna_gene_promoters, common_peaks)
+
+length(lincrna_gene_promoters)
+# 5,629 entries
+
+length(lincrna_atac_ov)
+# 1,073 overlaps about 20% of lincrna promters have atac peaks in all samples.
+(1073)/(5629)
+
+# let's check our overlap numbers:
+length(lincrna_atac_ov@to)
+length(lincrna_atac_ov@from)
+# Cool all looks good !
 
 
+# Now let's check mRNA promoter overlaps# let's check our overlap numbers:
+mrna_atac_ov <- findOverlaps(mrna_promoters, common_peaks)
+length(mrna_atac_ov)
+length(mrna_atac_ov@to)
+length(mrna_atac_ov@from)
+# 13,700 overlaps ! That's a lot !
 
+# checking percentage of promoter overlaps
+(13700)/(21859)
+# 63% of mRNA promoters have overlaps with an ATAC peak in all samples!
+# That is way more than lincRNA. This raises quesiton of which ones were expresses?
+# We will get to that later.
+
+# percentage of common peaks with promoter overlaps 
+(21859 + 1073) / (37152)
+# 62% ! That's a lot consider how small this space is overall in the genome
+```
+# Result: 63% of mRNA promoters have ATAC peak promoter overlap 
+# Result: 20% of lincRNA promoters have ATAC peak promoter overlap
+# Result: Total of ~22,500 out of 37,152 common peaks 
+# Result: Stable ATAC peaks in all samples are biased to promtoers 
+
+# What is the percentage of overlaps with all genes?
+```{r all gene overlap with common peaks}
+
+gene_promoter_ov <- findOverlaps(gene_promoters, common_peaks)
+length(gene_promoter_ov)
+length(gene_promoter_ov@to)
+length(gene_promoter_ov@from)
+
+# That is 19,126 overlaps of 55,401 gene annotations
+(19126)/(55401)
+# 35% ! Lower than mRNAs alone !
+```
+# Result: 35% of gene promoters have ATAC peak overlaps in all samples
+# Result: This is 2 times lower than what we observed for mRNA
+# Result: mRNA promoters are highly enriched in commone mouse ESC ATAC sites
+
+
+# Now let's compare the overlaps from our "find_common_peaks()" custom function
+```{r finding overlaps with "find_common_peaks" function}
+
+# need list of GRanges as input so merging these two compare each other
+gr_list <- list(sample1 = mrna_promoters, sample2 = common_peaks)
+
+# finding common peaks
+mrna_atac_ov_common <- find_common_peaks(gr_list)
+length(mrna_atac_ov_common)
+# Ok we see 13,316 overlaps compared to 13,700 using findOverlaps
+
+# Let's see if find_overlaps approach and common overlap.
+# strategy put them all in a list and then use common overlap 
+
+gr_list2 <- list(sample1 = mrna_promoters, sample2 = common_peaks, sample3 = mrna_atac_ov_common)
+
+# running find common
+mrna_atac_ov_common2 <- find_common_peaks(gr_list2)
+length(mrna_atac_ov_common2)
+# Same 13,316 - this means all common were present in findOverlaps
+```
+Nice we have analyzed and found best strategy for finding common peaks.
+
+# Now let's nicely repeat the process for gene, lincRNA and mRNA !
+Next we want to visualize and make sure peaks are correctly called on mRNA and lncRNA promoters
+First we need to do the common_peaks function to get all the objects in right format.
+Then make a bed file below : almost there let's go !
+
+# (a) GENE overlaps: common_peak ATAC peaks and gene promoter overlaps
+# IMPORTANT : PEAKS need to come first !!
+```{r using common_peaks function to create objects to be made into bed files}
+
+# make a list of gene_promoters and common_peaks
+gr_list_genes <- list(sample1 = common_peaks, sample2 = gene_promoters)
+# find common overlaps
+all_gene_common_ov <- find_common_peaks(gr_list_genes)
+length(all_gene_common_ov)
+# 14,761 smaller than 19,126 because of ordering!
+
+# create a bed file for peaks:
+rtracklayer::export(all_gene_common_ov, con = "results/gene_common_ov.bed", format = "BED")
+```
+
+# (b) lincRNA promoter ATAC overlap bed
+```{r lincrna promoter common overlaps and bed file}
+
+# make a list of lincrna_promoters and common_peaks
+gr_list_genes <- list(sample1 = common_peaks, sample2 = lincrna_gene_promoters)
+# find common overlaps
+lincrna_common_ov <- find_common_peaks(gr_list_genes)
+length(lincrna_common_ov)
+# 1035 about the same 
+
+# create a bed file for peaks:
+rtracklayer::export(lincrna_common_ov, con = "results/lincrna_common_ov.bed", format = "BED")
+```
+
+# (c) mrna promoter ATAC overlap
+```{r mrna promoter common overlaps and bed file}
+
+# make a list of lincrna_promoters and common_peaks
+gr_list_genes <- list(sample1 = common_peaks, sample2 = mrna_promoters)
+# find common overlaps
+mrna_common_ov <- find_common_peaks(gr_list_genes)
+length(mrna_common_ov)
+# 12,000 smaller but not too far off
+
+# create a bed file for peaks:
+rtracklayer::export(mrna_common_ov, con = "results/mrna_common_ov.bed", format = "BED")
 
 ```
 
 
 
-
-
-
-
-
+# Now let's take a look at what we did in IGV (common practice !)
+First we need to make some handy bed files of the overlaps we did.
 
 
 

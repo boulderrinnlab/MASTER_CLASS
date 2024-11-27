@@ -231,10 +231,25 @@ rtracklayer::export(mrna_common_ov, con = "results/mrna_common_ov.bed", format =
 
 ```
 
-
-
 # Now let's take a look at what we did in IGV (common practice !)
 First we need to make some handy bed files of the overlaps we did.
+
+# Let's ask the following questions about our peak files (feel free to take notes here!):
+First we need to load all 4 .bed files we have created and all the bigWig files into IGV.
+Also please load the consensus peaks file we used last time (any peak in any sample)
+
+# Questions to explore:
+(a) Find a common peak that is also called as mRNA
+  - how do these peaks look? Where do they appear to be relative to nearby consensus peaks?
+
+(b) Find a common peak that is also called a lncRNA
+   - how do these peaks look? Where do they appear to be relative to nearby consensus peaks?
+   
+(c) Do any peaks get called as both lincrna and mRNA?
+  - do this in code as well :) !
+  # Hint BC1
+  
+
 
 
 

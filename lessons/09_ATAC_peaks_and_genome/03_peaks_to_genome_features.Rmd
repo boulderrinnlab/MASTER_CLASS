@@ -235,7 +235,15 @@ rtracklayer::export(mrna_common_ov, con = "results/mrna_common_ov.bed", format =
 
 ```
 
-# Now let's take a look at what we did in IGV (common practice !)
+# (d) let's save our data / session !
+We will need some key objects for future analyses so let's save!
+```{r saving env objects}
+
+save(lincrna_genes, lincrna_gene_promoters, mrna_genes, mrna_promoters, gene_promoters, gencode_genes_mouse, common_peaks, mrna_common_ov, my_peaks, lincrna_common_ov, all_gene_common_ov, file = "results/key_mouse_atac_data.Rdata" )
+```
+
+
+# (e) Now let's take a look at our peak overlaps in IGV (common practice !)
 First we need to make some handy bed files of the overlaps we did.
 
 # Let's ask the following questions about our peak files (feel free to take notes here!):
@@ -255,10 +263,4 @@ Also please load the consensus peaks file we used last time (any peak in any sam
 (d) How could any lncRNA and mRNA promoter regions both be called as overlaps?
   # Hint BC1
   
-
-
-
-
-
-
 

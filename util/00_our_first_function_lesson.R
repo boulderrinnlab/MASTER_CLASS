@@ -279,3 +279,67 @@ find_common_peaks <- function(gr_list) {
   
   return(common_peaks)
 }
+
+
+###################################
+# FIND My PEAKS
+###################################
+
+
+#' Find Unique Peaks in a GRanges Object
+#'
+#' This function identifies peaks that are unique to one GRanges object 
+#' (`original_peaks`) by excluding peaks that overlap with another 
+#' GRanges object (`common_peaks`). It is designed for genomic peak 
+#' analyses, such as identifying condition-specific peaks in comparative 
+#' datasets.
+#'
+#' @param common_peaks A GRanges object representing the common peaks 
+#' across multiple conditions or datasets.
+#' @param original_peaks A GRanges object representing the peaks for a 
+#' specific condition or dataset.
+#' 
+#' @return A GRanges object containing peaks that are unique to 
+#' `original_peaks`, i.e., those that do not overlap with any peaks 
+#' in `common_peaks`.
+#'
+#' @examples
+#' # Load required package
+#' library(GenomicRanges)
+#'
+#' # Example GRanges objects
+#' common_peaks <- GRanges(seqnames = "chr1", ranges = IRanges(start = c(1, 50, 100), end = c(10, 60, 110)))
+#' original_peaks <- GRanges(seqnames = "chr1", ranges = IRanges(start = c(5, 70, 120), end = c(15, 80, 130)))
+#'
+#' # Identify unique peaks
+#' unique_peaks <- find_my_peaks(common_peaks, original_peaks)
+#'
+#' # Inspect results
+#' unique_peaks
+#'
+#' @export
+find_my_peaks <- function(common_peaks, original_peaks) {
+  # Find overlaps
+  overlaps <- findOverlaps(original_peaks, common_peaks)
+  
+  # Identify peaks in original_peaks that are not in common_peaks
+  unique_peaks <- original_peaks[-queryHits(overlaps)]
+  
+  # Return unique peaks
+  return(unique_peaks)
+}
+# create find_my_peaks function
+find_my_peaks <- function(common_peaks, original_peaks) {
+  # Find overlaps
+  overlaps <- findOverlaps(original_peaks, common_peaks)
+  
+  # Identify peaks in original_peaks that are not in common_peaks
+  unique_peaks <- original_peaks[-queryHits(overlaps)]
+  
+  # return peaks in condition selected
+  return(unique_peaks)
+}
+
+
+
+

@@ -56,3 +56,89 @@ length(my_peaks$KO_control_30)
 # Nice we are now set to compare non-dox vs dox !
 ```
 
+# Now let's compare 0 to all other time points for peaks that do and do not overlap 
+```{r comparing 0 peaks to all other time points for overlaps}
+
+# create input list to find_common_peaks
+dox_compare_list <- list(non_dox = non_dox_common_peaks, dox = dox_common_peaks)
+# run find_common_peaks
+dox_non_dox_ov <- find_common_peaks(dox_compare_list)
+length(dox_common_peaks)
+length(dox_non_dox_ov)
+# This means that 37435 of 38984 peaks overlapped
+# Percent overlap of dox in non-dox peaks
+37435/38984
+# 96% WOW! that means almost all peaks in dox are in non-dox
+# how many unique dox peaks not in present before dox
+37435 -38984
+# 1549 unique peaks
+
+# Checking the reverse comparison of non-dox peaks in dox
+length(non_dox_common_peaks)
+length(dox_non_dox_ov)
+# Now we see 37435 of 53747 overlap
+# percentage non-dox in dox :
+37435/53747
+# number peaks in non-dox and not in dox
+37435 - 53747
+# WOW 16312 peaks are dissapear in dox treatment
+# This is either really cool or suspicious :) 
+
+```
+# Result: almost all peaks common in dox were also present in non-dox
+# Result: 37435 dox common peaks of the 38984 non-dox peaks overlapped (96%)
+# Result: 16312 peaks found in non-dox that were not found in dox common
+# Result: 1549 unique peaks in dox and not present in non-dox
+# Result: Overall bias to more non-dox specific peaks (could it be due to sample num?)
+
+# Hypothesis: There is a Massive chromatin closing upon dox exposure?
+A large number of chromatin accessibility sites (ATAC peaks) sites
+are "closing" upon dox exposure. WE find 16K sites that close from 0
+across the rest of the time points. We also observe 1.5K peaks unique to 
+dox exposure and not present before.
+
+# Next step: let's see : prepare our new results for viewing in IGV
+First we need to make .bed files of peaks only in dox (1.5K)
+or only in non-dox(16K).
+
+# Step 1: create quick function to grab unique peaks to dox or non-dox
+Here we create a small but handy function to select any
+peaks we want from any comparison.
+```{r create find my peaks function for dox and non-dox specific peaks}
+
+# create find_my_peaks function
+find_my_peaks <- function(common_peaks, original_peaks) {
+  # Find overlaps
+  overlaps <- findOverlaps(original_peaks, common_peaks)
+  
+  # Identify peaks in original_peaks that are not in common_peaks
+  unique_peaks <- original_peaks[-queryHits(overlaps)]
+  
+  # return peaks in condition selected
+  return(unique_peaks)
+}
+
+
+# Peaks unique to non_dox
+unique_to_non_dox <- find_my_peaks(dox_non_dox_ov, non_dox_common_peaks)
+length(unique_to_non_dox)
+# Exact same number we had before!
+
+# Peaks unique to dox
+unique_to_dox <- find_my_peaks(dox_non_dox_ov, dox_common_peaks)
+length(unique_to_dox)
+# A little longer but super close - we can tell in IGV soon
+
+
+```
+
+##### START HERE WARNING OVERLAPS MAYBE THE WRONG WAY !!!
+# Step 2: Create .bed files for dox and non-dox peaks
+```{r}
+
+rtracklayer::export(unique_to_non_dox, con = "results/unique_to_non_dox.bed", format = "BED")
+
+rtracklayer::export(unique_to_dox, con = "results/unique_to_dox.bed", format = "BED")
+```
+
+# Bottom line not sure this is the best approach let's trying using DESEQ on ATACseq !!

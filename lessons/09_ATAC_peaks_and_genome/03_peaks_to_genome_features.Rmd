@@ -16,7 +16,9 @@ source("../../util/00_our_first_function_lesson.R")
 We will start to explore where our ATACseq peaks reside in the human genome
 and what features they correspond to (e.g., mRNAs, lincRNA and many more to explore)
 
-# Note our common_peaks object is peaks present in all samples.
+# Note difference between the two peak files we have been using:
+# common peaks: represent peaks present in all samples (time-points).
+# consensus peaks: peaks present in any sample(time-point) - from NF_CORE MACS2 
 So for now we are investigating where are the regions of chromatin
 that remain accessible despite dox exposure across any time point.
 
@@ -43,13 +45,15 @@ my_peaks <- import_peaks(consensus_file_path = peak_path)
 common_peaks <- find_common_peaks(my_peaks)
 
 ```
-Sweet! our env is geared up for overlaps on the peak side 
-- now for genomic annotation GRanges
+Sweet! We are all set with peak files/objects we need for our analyses !
 
-Here we will import the gencode genome annotation as a GRanges.
+# now for genomic annotation GRanges
+
+Here we will import the gencode genome annotation (for mm10) as a GRanges.
 Then we will subset it to "genes", "mRNA", "lncRNA" 
 This will allow us to determine how many common_peaks are 
 near these genome features. Then the same concept applies to all genome features!
+# In short: we are making GRanges of genome features to use in overlaps with ATAC peaks
 
 We have done this before but will start from scratch to refresh:
 # Step (2) Creating mouse gene, lincrna, mRNA annotation GRange objects
@@ -60,7 +64,7 @@ We have done this before but will start from scratch to refresh:
 gencode_gr_mouse <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf")
 
 # making subset to just gene objects:
-gencode_genes_mouse <- gencode_gr[gencode_gr_mouse$type == "gene"] 
+gencode_genes_mouse <- gencode_gr_mouse[gencode_gr_mouse$type == "gene"] 
 
 # mrna_genes
 mrna_genes <- gencode_genes_mouse[gencode_genes_mouse$gene_type %in% "protein_coding"]
@@ -83,9 +87,6 @@ A good reference window is 2Kb upstream and 2Kb Downstream for transcriptional r
 Let's make a promoter window around each of the gene types we just loaded !
 
 ```{r Creating promoter GRanges for genes, lncrna, mrNA}
-
-# lncrna_mrna_promoters
-lncrna_mrna_promoters <- promoters(mrna_lncrna_genes, upstream = 2000, downstream = 2000)
 
 # mrna_promoters
 mrna_promoters <- promoters(mrna_genes, upstream = 2000, downstream = 2000)
@@ -129,7 +130,10 @@ length(mrna_atac_ov@from)
 
 # checking percentage of promoter overlaps
 (13700)/(21859)
+# also
+(length(mrna_atac_ov))/ ((length(mrna_genes)))
 # 63% of mRNA promoters have overlaps with an ATAC peak in all samples!
+# NOTE not exactly the same which is strange .... 61.2% vs 62.6% 
 # That is way more than lincRNA. This raises quesiton of which ones were expresses?
 # We will get to that later.
 
@@ -163,7 +167,7 @@ length(gene_promoter_ov@from)
 ```{r finding overlaps with "find_common_peaks" function}
 
 # need list of GRanges as input so merging these two compare each other
-gr_list <- list(sample1 = mrna_promoters, sample2 = common_peaks)
+gr_list <- list(mrna_promoter = mrna_promoters, common = common_peaks)
 
 # finding common peaks
 mrna_atac_ov_common <- find_common_peaks(gr_list)
@@ -247,6 +251,8 @@ Also please load the consensus peaks file we used last time (any peak in any sam
    
 (c) Do any peaks get called as both lincrna and mRNA?
   - do this in code as well :) !
+
+(d) How could any lncRNA and mRNA promoter regions both be called as overlaps?
   # Hint BC1
   
 

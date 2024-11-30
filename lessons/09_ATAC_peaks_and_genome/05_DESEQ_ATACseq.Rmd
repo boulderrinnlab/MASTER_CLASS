@@ -1,0 +1,222 @@
+---
+title: "05_DESEQ_ATACseq"
+author: "JR"
+date: "2024-11-30"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# GOAL: Here we are going to use DESEQ to find peaks that change upon dox exposure.
+We used overlaps to find common peaks and peaks that were different between dox and non-dox
+conditions. What we found is ~14K peaks in non-dox that are not present in dox - about 1,500 the other way.
+However, when we looked at them they didn't look great or seem to be changing much.
+
+# Let's use DESEQ2 intead
+The NF_CORE ATAC pipeline is so smart it included "feature_counts" for each peak in the consensus peak folder!
+Feature_counts is a super handy program that takes any interval in a Range of GRange then it index the .BAM file (wow)
+and counts how many reads aligned in the Range/GRange.
+
+So, now we can think of each peak as a gene with counts as we did for RNAseq - thus we can do DESEQ2 the same way we did for RNAseq!
+
+Let's review the files we need that were provided by NF_CORE pipeline via MACS2 analysis.
+# consensus peaks
+peak file provided by MACS2 for any peak called in any condition 
+(not the overlaps across all conditions - that's the opposite)
+
+# Consensus peak feature counts: 
+The number of reads aligned to each peak interval in consensus peaks 
+
+Cool let's do some DESEQ on our ATACseq :)
+
+# Step 1: Load in consensus peak file and feature counts for consensus
+
+```{r loading in consensus peaks and featutre counts}
+
+# loading consensus peak file MACS2 (peak called significant in any condition) - any peak every called
+broad_consensus_peaks <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/consensus/consensus_peaks.mLb.clN.annotatePeaks.txt",
+                             sep = "\t", header = TRUE)
+
+# Let's take a look
+view(broad_consensus_peaks)
+# Nice we see columns with peak interval and all kinds of info (even nearest gene!)
+# Note we may wany to move the first column to row names and clean up first col name etc.
+colnames(broad_consensus_peaks)[1] <- "interval_id"
+
+# consensus feature counts file:
+broad_consensus_counts <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/consensus/consensus_peaks.mLb.clN.featureCounts.txt",
+                             sep = "\t", header = TRUE)
+
+# Let's take a look
+view(broad_consensus_counts)
+# Nice we see peak interval to connect to peaks file and all the same handy info found in poeaks file!
+```
+
+# Step 2: create sample sheet and input files for DESEQ2
+```{r Creating peak file and counts for DESEQ2 input > atac_samples}
+
+# Making sample sheet and cleaning up feature counts file 
+rownames(broad_consensus_counts) <- broad_consensus_counts$Geneid
+
+# selecting out essential columns
+broad_consensus_counts <- broad_consensus_counts %>%
+  dplyr::select(-c(Geneid, Chr, Start, End, Strand, Length)) 
+
+# Clean up column names 
+colnames(broad_consensus_counts) <- gsub("_REP1", "_R1", gsub("\\.mLb\\.clN\\.sorted\\.bam", "", colnames(broad_consensus_counts)))
+count_columns <- colnames(broad_consensus_counts)
+
+# Create start of sample sheet and extract info from count_columns 
+atac_samples <- data.frame(
+  sample = count_columns,
+  # making condidtion non_dox "0" dox all others (if else)
+  condition = ifelse(grepl("_0_", count_columns), "non-dox", 
+                     # grab the rest (if else somewhat redundant)
+                     ifelse(grepl("non-dox", count_columns), "non-dox", "dox")),
+  # use chat GPT to find out reg ex :) basically just grabbing number in col name to make time point
+  timepoint_minutes = as.numeric(sub(".*_(\\d+)_R1.*", "\\1", count_columns))
+)
+
+# Factor time points for DESEQ2 !!
+atac_samples <- atac_samples %>%
+  mutate(timepoint_minutes = factor(timepoint_minutes, levels = c("0", "30", "60", "90", "120", "150")))
+
+# checking factoring
+levels(atac_samples$timepoint_minutes)
+
+# Cool now we have a good sample sheet !
+
+```
+
+# Step 3: Run DESEQ2 on feature counts of ATAC peaks !
+
+```{r DESEQ2 on Feature counts of consensus peaks}
+
+# Let's always double check that our colnames of counts is same as row names of sample sheet!
+print(stopifnot(all(colnames(broad_consensus_counts) == atac_samples$sample)))
+# Null - Nice good to go
+
+# Set up DESEQ2 with sameple sheet (colData) and counts (countData)
+atac_dds <- DESeqDataSetFromMatrix(countData = broad_consensus_counts, 
+                                   colData = atac_samples, 
+                                   design = ~ timepoint_minutes)
+# Run DESeq2 timepoint model
+atac_dds <- DESeq(atac_dds)
+
+# Nice we have done DESEQ2 analysis on our ATACseq peak counts !
+```
+
+# Step 4: extract results from DESEQ2
+```{r extract results of DESEQ2 on Peak counts}
+# Extract DESeq2 results
+atac_lfc <- results(atac_dds) %>%
+  as.data.frame() %>%
+  rownames_to_column("interval_id")
+
+# let's look
+view(atac_lfc)
+
+# Merge with broad_consensus_peaks info
+atac_lfc <- merge(atac_lfc, 
+                  broad_consensus_peaks %>%
+                    dplyr::select(interval_id, Gene.Name, Nearest.PromoterID, 
+                                  Distance.to.TSS, Chr, Start, End),
+                  by = "interval_id")
+
+# making new column of chromosomeal coordinates : Create Chr:Start-End
+atac_lfc <- atac_lfc %>%
+  mutate(ucsc_coord = paste(Chr, Start, End, sep = "-"))
+
+# Cool now we have a handy DESEQ2 results data frame to analyze !
+```
+
+# Step 5: Analyze results !
+```{r analyze results of DESEQ2 on Peak counts}
+
+# Let's look globally at the results first:
+# col names atac_lfc
+head(atac_lfc)
+
+# let's look at distribution of padj
+hist(atac_lfc$padj)
+# Yikes almost all are 1 meaning not significant !
+
+# what about Pvalue?
+hist(atac_lfc$pvalue)
+# Ok some pvals are sig but worrisome that padj not
+
+# What about LFC? 
+hist(atac_lfc$log2FoldChange)
+# Ok some good changes ranging from log2 -5 to 5
+
+# count levels?
+hist(atac_lfc$baseMean)
+# all very low - perhaps expected for ATACseq vs RNAseq
+
+# making a results data frame to summarize
+res <- results(atac_dds) 
+print(summary(res))
+# No peaks are found significnat by padj !!
+
+# let's look MA plot of counts vs fold change
+plotMA(res, ylim = c(-3,3))
+# Ok standard dispursion of data higher FC at lower counts ..
+
+# PCA plot for sample similarity 
+plotPCA(vst(atac_dds), intgroup = "timepoint_minutes")
+# Samples are all over the place based on counts :) 
+# we might want to go back to NF_CORE output summary and look at clustering...
+```
+# Overall - no significant peaks changing due to dox exposure and time!
+Thus as we suspected by visualization of peaks in non-dox vs dox we didn't see anything
+compeling. DESEQ2 is saying the same thing.
+
+One thing could be the DESEQ2 model - let's repeat for 0 vs all other time points
+
+# Factor non-dox, dox conditions from ATAC_samples for DESEQ2 analysis
+```{r}
+
+# Factor time points for DESEQ2 !!
+atac_samples <- atac_samples %>%
+  mutate(condition = factor(condition, levels = c("non-dox", "dox")))
+
+
+atac_dds_condition <- DESeqDataSetFromMatrix(countData = broad_consensus_counts, 
+                                   colData = atac_samples, 
+                                   design = ~ condition)
+# Run DESeq2 timepoint model
+atac_dds_condition <- DESeq(atac_dds_condition)
+
+```
+
+# extract deseq2 results from condition model
+```{r}
+# Extract DESeq2 results
+atac_lfc_condition <- results(atac_dds_condition) %>%
+  as.data.frame() %>%
+  rownames_to_column("interval_id")
+
+# let's look
+view(atac_lfc_condition)
+
+# Merge with broad_consensus_peaks info
+atac_lfc_condition <- merge(atac_lfc_condition, 
+                  broad_consensus_peaks %>%
+                    dplyr::select(interval_id, Gene.Name, Nearest.PromoterID, 
+                                  Distance.to.TSS, Chr, Start, End),
+                  by = "interval_id")
+
+# making new column of chromosomeal coordinates : Create Chr:Start-End
+atac_lfc_condition <- atac_lfc %>%
+  mutate(ucsc_coord = paste(Chr, Start, End, sep = "-"))
+
+# Now take a look at the results the same as above? Any significant??
+# Hint use filter function on atac_lfc and atac_lfc_condition - lfc and pval
+```
+
+
+

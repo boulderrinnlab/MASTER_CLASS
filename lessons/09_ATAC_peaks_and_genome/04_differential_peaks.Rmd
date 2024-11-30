@@ -155,14 +155,33 @@ length(sig_rnaseq_atac_non_dox)
 
 ```
 
-##### START HERE WARNING OVERLAPS MAYBE THE WRONG WAY !!!
-# Step 2: Create .bed files for dox and non-dox peaks
-```{r}
+# Guess what we do next?
+Look at the peaks in the raw data (IGV) :) !
+Let's look at peaks called as different in dox and non-dox in IGV
+```{r exporting to bed files to view in IGV}
 
+# export non-dox peaks
 rtracklayer::export(unique_to_non_dox, con = "results/unique_to_non_dox.bed", format = "BED")
 
+# export dox peaks
 rtracklayer::export(unique_to_dox, con = "results/unique_to_dox.bed", format = "BED")
+
+# Let's export the sig atac - rna seq overlap
+df_sig_rnaseq_atac_non_dox <- as.data.frame(sig_rnaseq_atac_non_dox)
+write_csv(df_sig_rnaseq_atac_non_dox,"results/rnaseq_atacseq_overlaps.csv")
 
 ```
 
-# Bottom line not sure this is the best approach let's trying using DESEQ on ATACseq !!
+
+############################
+Exercise: View peaks in IGV
+############################
+
+# Now let's explore our results in IGV asking the following:
+
+(a) Do the peaks called unique to dox look bigger in non-dox than dox?
+
+(b) Look at a few examples of ATACseq/RNAseq overlap gene names in IGV
+- do the peaks look compeling? Do they go in the same direction as gene?
+
+

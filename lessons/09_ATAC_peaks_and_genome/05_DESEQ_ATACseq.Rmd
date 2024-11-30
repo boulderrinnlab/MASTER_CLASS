@@ -178,7 +178,7 @@ compeling. DESEQ2 is saying the same thing.
 One thing could be the DESEQ2 model - let's repeat for 0 vs all other time points
 
 # Factor non-dox, dox conditions from ATAC_samples for DESEQ2 analysis
-```{r}
+```{r DESEQ2 on condition instead of time }
 
 # Factor time points for DESEQ2 !!
 atac_samples <- atac_samples %>%
@@ -217,6 +217,41 @@ atac_lfc_condition <- atac_lfc %>%
 # Now take a look at the results the same as above? Any significant??
 # Hint use filter function on atac_lfc and atac_lfc_condition - lfc and pval
 ```
+# Interesting we get essentially the same sig peaks back when comparing condition !
+In fact the top one is the same as in time point. 
+# Result: No chromatin peaks signficantly change due to dox exposure.
+# Result: RNAseq shows lots of gene-expression changes
+# Result: Dox affects gene-expression but not chromatin regulation.
+
+################################
+ExeRcise: Explore peaks in IGV
+################################
+
+# As usual look at DESEQ values in raw data !
+Let's now explore our atac_lfc and atac_lfc_condition
+
+(a) Load in ATAC bigWig files and consensus_peaks.bed into IGV
+
+(b) search peak interval in atac_lfc_condition that is sig
+-pick a peak with lowest pval and highest fold change
+- look at it in IGV
+
+(c) take a screen shot of IGV data 
+- transfer to results folder in 09_atac_peaks_and_genome/results/image.jpg)
+- you will want this later when we knit this into a cool doc !
+
+
+# High Base mean (60) & low pval (0.04)
+chr7:12959084-12963163
+
+# Low pval and big lfc (-5):
+chr7-58768048-58768241
+
+# 5 log2fc positive
+chr7
+107862915
+107863129
+
 
 
 

@@ -132,9 +132,28 @@ length(unique_to_dox)
 
 ```
 
-#####TODO add overlap with RNAseq sig genes !
+# Now that we have dox and non-dox peaks let's overlap with RNAseq hits!
+First we will need to load our sig genes and then intersect
+The data we need from RNAseq is in 06_Differential_expression_analyses/results/time_point_res_df.Rdata
+```{r overlap of non-dox peaks and sig RNAseq changes}
 
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
 
+# make gr_list input for find_common_peaks custom function
+gr_list_gene_promoter_non_dox_ov <- list( gene_promoters = gene_promoters, non_dox_promoters = unique_to_non_dox)
+
+# find overlaps
+non_dox_gene_promoter_ov <- find_common_peaks(gr_list_gene_promoter_non_dox_ov)
+# 2178 peaks overlap gene promoters out of 16,312
+
+# Now find same gene_id in RNAseq resuts
+sig_rnaseq_atac_non_dox <- non_dox_gene_promoter_ov[non_dox_gene_promoter_ov$gene_id %in% filtered_res_df$gene_id]
+
+# how many genes overlap between RNAseq and ATACseq non-dox peaks!
+length(sig_rnaseq_atac_non_dox)
+#47 not many ... let's look (see below)
+
+```
 
 ##### START HERE WARNING OVERLAPS MAYBE THE WRONG WAY !!!
 # Step 2: Create .bed files for dox and non-dox peaks
@@ -143,6 +162,7 @@ length(unique_to_dox)
 rtracklayer::export(unique_to_non_dox, con = "results/unique_to_non_dox.bed", format = "BED")
 
 rtracklayer::export(unique_to_dox, con = "results/unique_to_dox.bed", format = "BED")
+
 ```
 
 # Bottom line not sure this is the best approach let's trying using DESEQ on ATACseq !!

@@ -10,6 +10,20 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 source("../../util/00_our_first_function_lesson.R")
+library(GenomicRanges)
+library(IRanges)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(readr)
+library(ggplot2)
+library(purrr)
+library(magrittr)
+library(pheatmap)
+library(textshape)
+library(Rcpp)
+library(DESeq2)
+library(stringr)
 ```
 
 # Objective: To determine if chromatin accessibility changes due to dox exposure.
@@ -30,8 +44,8 @@ We will be using the MACS2 output files from the NF_CORE Pipeline For example:
 ```{r loading in peak files to list of GRanges}
 
 # establishing peak path to the dir with MACS2 output peak files from NF_CORE ATACseq pipeline
-peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
-# peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+#peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
+peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
 
 # creating a file list also needed for import_peaks function to get sample name associated with file
 fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
@@ -48,21 +62,21 @@ print(num_peaks <- sapply(my_peaks, length) %>% as.data.frame)
 # (b) finding number of peaks common in all samples using find_common_peaks custom funciton
 Here I am asking how many peaks are called in all the time points measured. These are an interesting
 set of genomic locations as these chromatin accessibility sites persist across all samples. 
-```{r finding common peaks in all samples}
+```{r finding common peaks in all samples, dependson="previous_chunk"}
 
 # run find_common_peaks function 
-common_peaks <- suppressWarnings(find_common_peaks(my_peaks))
+common_peaks <- find_common_peaks(my_peaks)
 print("here are the number of peaks that overlap in all samples")
 length(common_peaks)
 
-#TODO insert screen shot of good coomon peak
+
 ```
 # Result 37,152 peaks are common in all samples - visual inspection in IGV looks good (see below)
 
 # (c) Peaks that are unique to dox and non-dox conditions
 Using find_common_overlaps peaks that are specific to dox or non-dox
 will be identified.
-```{r dox vs non-dox atac peaks}
+```{r dox vs non-dox atac peaks, dependson="previous_chunk"}
 
 # common peaks in non-dox (0 time point)
 non_dox_samples <- my_peaks[c("KO_control_0", "WT_control_0")]
@@ -109,7 +123,7 @@ length(unique_to_dox)
 Here I am going to create GRange objects of genome annotations from 
 Gencode mv25. Specifically we will create gene annotation GRanges and 
 their corresponding promoter region. These objects will be used for overlaps with ATAC peaks
-```{r creating genome annotation GRanges}
+```{r creating genome annotation GRanges, dependson="previous_chunk"}
 
 # Loading gencode genome annotation as GRanges 
 gencode_gr_mouse <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf")
@@ -131,7 +145,7 @@ lincrna_gene_promoters <- promoters(lincrna_genes, upstream = 2000, downstream =
 # (e) Compare overlaps of dox and non-dox peaks with gene annotaitons
 Now we will overlap our dox and non-dox unique peaks with genome annotations (gene promoters)
 First we will find number of overlaps with gene promoters and then genes that had changed in RNAseq
-```{r dox and non-dox unique peak overalp gene promoters}
+```{r dox and non-dox unique peak overalp gene promoters, dependson="previous_chunk"}
 
 # gr_list of promoters and peaks unique to non_dox condition
 gr_list_gene_promoter_non_dox_ov <- list( gene_promoters = gene_promoters, non_dox_peaks = unique_to_non_dox)
@@ -183,7 +197,7 @@ statistical approach DESEQ2 to compare peak read counts across samples of dox an
 To do so we will use consensus peaks (any peak called in any condition) and feature counts of each 
 consensus peak to be used as input into DESEQ2 for differential expression of peak counts
 
-```{r create input files and run DESEQ2 on feature counts of consensus peaks from NF_CORE}
+```{r create input files and run DESEQ2 on feature counts of consensus peaks from NF_CORE, dependson="previous_chunk"}
 
 # consensus peaks
 broad_consensus_peaks <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/consensus/consensus_peaks.mLb.clN.annotatePeaks.txt",
@@ -232,7 +246,7 @@ atac_dds_condition <- suppressWarnings(DESeq(atac_dds_condition))
 
 # (g) extracting and analyzing DESEQ2 results
 Creating a dataframe with pvlaues and lfc etc 
-```{r extracting DESEQ2 results}
+```{r extracting DESEQ2 results, dependson="previous_chunk"}
 
 # Extract DESeq2 results
 atac_lfc_condition <- results(atac_dds_condition) %>%
@@ -255,18 +269,18 @@ atac_lfc_condition <- merge(atac_lfc_condition,
 Now we will see how many peaks had a padj < 0.05 and 
 other features of our analyses!
 
-```{r analysis of DESEQ2 on ATAC peak counts}
+```{r analysis of DESEQ2 on ATAC peak counts, dependson="previous_chunk"}
 
 hist(atac_lfc_condition$padj)
 # almost all padj are near 1 !! none at 0.05
 
-hist(atac_lfc$pvalue)
+hist(atac_lfc_condition$pvalue)
 # Ok some pvals are sig but worrisome that padj no
 
-hist(atac_lfc$log2FoldChange)
+hist(atac_lfc_condition$log2FoldChange)
 # Ok some good changes ranging from log2 -5 to 5
 
-hist(atac_lfc$baseMean)
+hist(atac_lfc_condition$baseMean)
 # all very low - perhaps expected for ATACseq vs RNAseq
 
 ```
@@ -293,4 +307,7 @@ This is quite interesting that we observe 908 genes changing in RNA expression. 
 we don't find significant ATAC peak changes. Thus dox must work in a non-epigenetic mechanism. Thus,
 dox could be influencing post transcriptional or transcriiptional changes but not epigenetic.
 
+##########################################
+Ecercise: Knit document into web document!
+##########################################
 

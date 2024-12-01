@@ -26,7 +26,7 @@ library(DESeq2)
 library(stringr)
 ```
 
-# Objective: To determine if chromatin accessibility changes due to dox exposure.
+#### Objective: To determine if chromatin accessibility changes due to dox exposure.
 We have performed a time course series of experiements measuring chromating accessibility
 (ATACseq peaks)upon exposure to dox. These are 0, 30, 60, 90, 120, 150 minutes.
 Each time point has a replicate. The fastq sequencing files were processed by the
@@ -37,9 +37,9 @@ We will be using the MACS2 output files from the NF_CORE Pipeline For example:
 -consensus.broad.peak
 -consensus.feature.counts
 
-# Approach:
+#### Approach:
 
-# (a) Loading in ATACseq peak files with custom function import_peaks (list of GRanges output)
+##### (a) Loading in ATACseq peak files with custom function import_peaks (list of GRanges output)
 
 ```{r loading in peak files to list of GRanges}
 
@@ -57,69 +57,82 @@ print("here are the number of peaks for each sample")
 print(num_peaks <- sapply(my_peaks, length) %>% as.data.frame)
 
 ```
-# Result - there are roughly 70-100K peaks in a given sample
+##### Result - there are roughly 70-100K peaks in a given sample
 
-# (b) finding number of peaks common in all samples using find_common_peaks custom funciton
+##### (b) finding number of peaks common in all samples using find_common_peaks custom funciton
 Here I am asking how many peaks are called in all the time points measured. These are an interesting
 set of genomic locations as these chromatin accessibility sites persist across all samples. 
 ```{r finding common peaks in all samples, dependson="previous_chunk"}
-
 # run find_common_peaks function 
-common_peaks <- find_common_peaks(my_peaks)
-print("here are the number of peaks that overlap in all samples")
-length(common_peaks)
-
+common_peaks <-  suppressWarnings(find_common_peaks(my_peaks))
 
 ```
-# Result 37,152 peaks are common in all samples - visual inspection in IGV looks good (see below)
+Here are the number of peaks that overlap in all samples: `r length(common_peaks)`
 
-# (c) Peaks that are unique to dox and non-dox conditions
+![example of peak called by find_common_peaks in all samples.](results/common_peak_example.jpg)
+##### The figure shows that our common peak call looks good. Peaks appear in all conditions.
+##### Result 37,152 peaks are common in all samples - visual inspection in IGV looks good (see below)
+
+
+##### (c) Peaks that are unique to dox and non-dox conditions
 Using find_common_overlaps peaks that are specific to dox or non-dox
 will be identified.
-```{r dox vs non-dox atac peaks, dependson="previous_chunk"}
+
+Non-dox samples
+```{r non-dox atac peaks, dependson="previous_chunk"}
 
 # common peaks in non-dox (0 time point)
 non_dox_samples <- my_peaks[c("KO_control_0", "WT_control_0")]
 non_dox_common_peaks <- find_common_peaks(non_dox_samples)
+print(c("This is how many peaks are common in non-dox:", length(non_dox_common_peaks)))
+```
 
-print("This is how many peaks are common in non-dox")
-length(non_dox_common_peaks)
-
+Dox samples
+```{r dox samples, dependson="previous_chunk"}
 # common peaks in dox time points (!not time 0)
 dox_samples <- names(my_peaks)[!grepl("_0$", names(my_peaks))]
 dox_peaks <- my_peaks[dox_samples]
 dox_common_peaks <- suppressWarnings(find_common_peaks(dox_peaks))
+print(c("This is how many peaks are common in dox",length(dox_common_peaks)))
+```
 
-print("This is how many peaks are common in dox")
-length(dox_common_peaks)
-
+Overlap of dox and non-dox (to get unique to each condition)
+```{r dox vs non-dox atac peaks, dependson="previous_chunk"}
 # Now overlap between dox and non-dox common peaks
 dox_compare_list <- list(non_dox = non_dox_common_peaks, dox = dox_common_peaks)
-dox_non_dox_ov <- find_common_peaks(dox_compare_list)
-
-print("This is how many peaks are common in both non- and dox treatments")
-length(dox_non_dox_ov)
+dox_non_dox_ov <- suppressWarnings(find_common_peaks(dox_compare_list))
+print(c("This is how many peaks are common in both non- and dox treatments", length(dox_non_dox_ov)))
 
 # extracting peaks unique to each condition (dox non-dox)
 # Peaks unique to non_dox
-unique_to_non_dox <- find_my_peaks(dox_non_dox_ov, non_dox_common_peaks)
-
-print("This is how many peaks are unique to non-dox condition")
-length(unique_to_non_dox)
+unique_to_non_dox <-suppressWarnings(find_my_peaks(dox_non_dox_ov, non_dox_common_peaks))
+print(c("This is how many peaks are unique to non-dox condition",length(unique_to_non_dox)))
 
 # Peaks unique to dox
-unique_to_dox <- find_my_peaks(dox_non_dox_ov, dox_common_peaks)
+unique_to_dox <- suppressWarnings(find_my_peaks(dox_non_dox_ov, dox_common_peaks))
 
-print("This is how many peaks are unique to dox condition")
-length(unique_to_dox)
+print(c("This is how many peaks are unique to dox condition", length(unique_to_dox)))
 ```
-# Result: almost all peaks common in dox were also present in non-dox
-# Result: 37435 dox common peaks of the 38984 non-dox peaks overlapped (96%)
-# Result: 16312 peaks found in non-dox that were not found in dox common
-# Result: 1549 unique peaks in dox and not present in non-dox
-# Result: Overall bias to more non-dox specific peaks (could it be due to sample num?)
 
-# (d) Creating mouse gene, lincrna, mRNA annotation GRange objects
+Number of peaks that unique to non-dox condition: `r length(unique_to_non_dox)`
+![Example figure of a non-dox unique peak (not too convincing).](results/common_peak_example.jpg)
+
+Note in this figure that the common peak in all samples does not look much different than
+the one unique to dox condition. Suspicious - and no statistics can be used - overlaps may
+not be the best approach.
+
+Number of peaks that unique to dox condition: `r length(unique_to_dox)`
+![example of peak unique to dox examples.](results/dox_specifc_example.jpg)
+
+#### Summary dox non-dox overlaps 
+
+##### Result: almost all peaks common in dox were also present in non-dox
+##### Result: 37435 dox common peaks of the 38984 non-dox peaks overlapped (96%)
+##### Result: 16312 peaks found in non-dox that were not found in dox common
+##### Result: 1549 unique peaks in dox and not present in non-dox
+##### Result: Overall bias to more non-dox specific peaks (could it be due to sample num?)
+
+##### (d) Creating mouse gene, lincrna, mRNA annotation GRange objects
 Here I am going to create GRange objects of genome annotations from 
 Gencode mv25. Specifically we will create gene annotation GRanges and 
 their corresponding promoter region. These objects will be used for overlaps with ATAC peaks
@@ -142,25 +155,23 @@ lincrna_gene_promoters <- promoters(lincrna_genes, upstream = 2000, downstream =
 
 ```
 
-# (e) Compare overlaps of dox and non-dox peaks with gene annotaitons
+##### (e) Compare overlaps of dox and non-dox peaks with gene annotaitons
 Now we will overlap our dox and non-dox unique peaks with genome annotations (gene promoters)
 First we will find number of overlaps with gene promoters and then genes that had changed in RNAseq
 ```{r dox and non-dox unique peak overalp gene promoters, dependson="previous_chunk"}
 
 # gr_list of promoters and peaks unique to non_dox condition
 gr_list_gene_promoter_non_dox_ov <- list( gene_promoters = gene_promoters, non_dox_peaks = unique_to_non_dox)
-non_dox_gene_promoter_ov <- find_common_peaks(gr_list_gene_promoter_non_dox_ov)
+non_dox_gene_promoter_ov <- suppressWarnings(find_common_peaks(gr_list_gene_promoter_non_dox_ov))
 
 print("This is how many non-dox_unique peaks overlapped gene promoters")
 length(non_dox_gene_promoter_ov)
 
 # peaks unique to dox condition overlapped with gene promoters
 gr_list_gene_promoter_dox_ov <- list( gene_promoters = gene_promoters, dox_peaks = unique_to_dox)
-dox_gene_promoter_ov <- find_common_peaks(gr_list_gene_promoter_dox_ov)
+dox_gene_promoter_ov <- suppressWarnings(find_common_peaks(gr_list_gene_promoter_dox_ov))
 
-print("This is how many dox_unique peaks overlapped gene promoters")
-length(dox_gene_promoter_ov)
-
+print(c("This is how many dox_unique peaks overlapped gene promoters", length(dox_gene_promoter_ov)))
 
 # Now find same gene_id in RNAseq resuts
 # Loading RNAseq results from 06_Differential_expression_analyses
@@ -169,28 +180,32 @@ load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_
 # filter significant genes from RNAseq "filtered_res_df" to non-dox unique promoter overlaps
 sig_rnaseq_atac_non_dox <- non_dox_gene_promoter_ov[non_dox_gene_promoter_ov$gene_id %in% filtered_res_df$gene_id]
 
-print("this is how many genes overlap between RNAseq and ATACseq non-dox peaks")
-length(sig_rnaseq_atac_non_dox)
+print(c("this is how many genes overlap between RNAseq and ATACseq non-dox peaks", length(sig_rnaseq_atac_non_dox)))
 
-print("Here are the gene names that overlap")
-print(sig_rnaseq_atac_non_dox$gene_name)
+print(c("Here are the gene names that overlap", sig_rnaseq_atac_non_dox$gene_name))
 
 # filter significant genes from RNAseq "filtered_res_df" to non-dox unique promoter overlaps
 sig_rnaseq_atac_dox <- non_dox_gene_promoter_ov[dox_gene_promoter_ov$gene_id %in% filtered_res_df$gene_id]
 
-print("this is how many genes overlap between RNAseq and ATACseq non-dox peaks")
-length(sig_rnaseq_atac_dox)
+print(c("this is how many genes overlap between RNAseq and ATACseq non-dox peaks", length(sig_rnaseq_atac_dox)))
 
 ```
-# Result: 2178 non-dox peaks overlap gene promoters out of 16,312 (13%)
-# Result: 239 dox peaks pverlap gene promoters out of 1,793 (13% same as non-dox) 
-# Result: 47 and 37 genes had overlap with genes that also changed by RNAseq
+Number ofgenes overlap between RNAseq and ATACseq non-dox peaks: `r length(sig_rnaseq_atac_dox)
+![example of peak overlapping gene changing by RNAseq not to convincing again ....](results/RNAseq_atac_overlap.jpg)
+Also note that the gene that is called unique to non-dox doesnt' look differnet than common peak to all
 
-# WARNING: Visual inspection of peaks does not find this approach convincing
+##### Summary:
+##### Result: 2178 non-dox peaks overlap gene promoters out of 16,312 (13%)
+##### Result: 239 dox peaks pverlap gene promoters out of 1,793 (13% same as non-dox) 
+##### Result: 47 and 37 genes had overlap with genes that also changed by RNAseq
+##### Overall: shows our overlap approaches worked but not great for finding differential peaks
+
+### WARNING: Visual inspection of peaks does not find this approach convincing
 Importing bigWig files and peak calls showed very little convincing data that
-peaks were changing in dox and non-dox conditions. 
+peaks were changing in dox and non-dox conditions. Does show good overlaps with 
+gene annotations so approach is working well.
 
-# (f) use DESEQ2 to find out if peaks are changing in dox and non-dox conditions
+##### (f) use DESEQ2 to find out if peaks are changing in dox and non-dox conditions
 The overlap analysis did not contain statistical analysis and is a logical approach
 that ended up not being that compeling based on raw data. So now we will use a 
 statistical approach DESEQ2 to compare peak read counts across samples of dox and non-dox conditions.
@@ -239,12 +254,12 @@ atac_samples <- atac_samples %>%
 atac_dds_condition <- suppressWarnings(DESeqDataSetFromMatrix(countData = broad_consensus_counts, 
                                    colData = atac_samples, 
                                    design = ~ condition))
-# Run DESeq2 timepoint model
+# Run DESeq2 condition model
 atac_dds_condition <- suppressWarnings(DESeq(atac_dds_condition))
 
 ```
 
-# (g) extracting and analyzing DESEQ2 results
+##### (g) extracting and analyzing DESEQ2 results
 Creating a dataframe with pvlaues and lfc etc 
 ```{r extracting DESEQ2 results, dependson="previous_chunk"}
 
@@ -264,8 +279,13 @@ atac_lfc_condition <- merge(atac_lfc_condition,
                   by = "interval_id")
 
 ```
+![example of DESESEQ2 SIG ATAC PEAK top statistical](results/top_statistical_hit_deseq.jpg)
+Result: Not very convincing
 
-# (h) analyzing results of DESEQ on ATACseq peak counts
+![example of DESESEQ2 SIG ATAC PEAK high base-mean](results/example_high_basemean_sig.jpg)
+Result: Not very convincing
+
+##### (h) analyzing results of DESEQ on ATACseq peak counts
 Now we will see how many peaks had a padj < 0.05 and 
 other features of our analyses!
 
@@ -286,10 +306,10 @@ hist(atac_lfc_condition$baseMean)
 ```
 # Result : no peaks are significant by padj criterion
 # Warning: visual inspection does not show these peaks to look compelling 
-# Result: Chromatin accessibility does not appear to reliably or robust change upon dox exposure.
+### Result: Chromatin accessibility does not appear to reliably or robust change upon dox exposure.
 
 
-# Conclusion (1) Interesting set of common chromatin accessibility sites
+#### Conclusion (1) Interesting set of common chromatin accessibility sites
 There are ~30,000 peaks that are consistent across all samples. This is interesting as these are 
 robust and reliable sites of chromatin accessibility in mouse ESCs. Meaning epigenetic markers of the
 mESC cell state. It maybe an interesting future approach to investigate how many of these sites changed 
@@ -297,12 +317,12 @@ in RNA expression. This may indicate if regulatory events were more biased to op
 simply compare expression levels of genes (even if they don't change in time) compared to these common sites 
 versus non common sites.
 
-# Conclusion (2) Peaks do not sigificantly change due to dox
+#### Conclusion (2) Peaks do not sigificantly change due to dox
 In neither overlap approach nor DESEQ2 were any peaks significant. 
 Visual inspection of all tests failed to find compelling peaks. 
 More importantly, there were no signifcant statics that could be used to define changing peaks.
 
-# Conclusion (3) RNA gene expression changes due to dox but not chromatin accessibility!
+#### Conclusion (3) RNA gene expression changes due to dox but not chromatin accessibility!
 This is quite interesting that we observe 908 genes changing in RNA expression. However,
 we don't find significant ATAC peak changes. Thus dox must work in a non-epigenetic mechanism. Thus,
 dox could be influencing post transcriptional or transcriiptional changes but not epigenetic.

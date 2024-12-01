@@ -311,3 +311,10 @@ dox could be influencing post transcriptional or transcriiptional changes but no
 Ecercise: Knit document into web document!
 ##########################################
 
+# just click the "knit" button (bawl of string above .rmd pane)
+
+Voila !! I hope your proud you just condensed this level into 300 lines of code!
+Now your ready to start using all you have learned on even more data (same samples but human stem cells!)
+
+# Congratulations and now level up to final lv 10 !
+

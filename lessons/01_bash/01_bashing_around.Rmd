@@ -232,3 +232,13 @@ Here the list output becomes the standard input to the word count owing to the p
 Or the pipe passed along the standard output of ls to standard input of wc. The 
 -l flag is for the line count. 
 
+#######################
+Exercise
+#######################
+
+Use chat GPT to explore the <grep> function
+
+A) GREP a specific word and case from your text3.txt file
+B) GREP a the first letter using wild card
+
+

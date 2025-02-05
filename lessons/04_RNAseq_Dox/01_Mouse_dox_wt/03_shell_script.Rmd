@@ -78,6 +78,9 @@ echo "Here we go You've requested $SLURM_CPUS_ON_NODE core."
 ## Singularity has a bit more security but costs money - docker is free but less secure.
 module load singularity/3.1.1
 
+## Load Java version 21
+module load openjdk/21.0.1
+
 
 ## Now we are invokign nextflow and to "run" nf-core/rnaseq version 3.14.0
 nextflow run nf-core/rnaseq -r 3.14.0 \

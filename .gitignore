@@ -25,6 +25,7 @@
 log/*
 results/*
 work/*
+
 *.Rproj
 *.csv
 *.gtf

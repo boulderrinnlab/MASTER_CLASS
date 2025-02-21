@@ -9,6 +9,11 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(magrittr)
+library(tidyr)
+library(dplyr)
+
+
 ```
 
 
@@ -24,6 +29,7 @@ load("results/count_files.RData", verbose = T)
 
 #IMPORTANT Raw counts file
 counts_matrix <- read.table("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/04_RNAseq_Dox/01_Mouse_dox_wt/good_class_RNAseq/pipeline_output/star_salmon/salmon.merged.gene_counts.tsv", header=TRUE, row.names=1)
+
 
 # Remove gene name column
 counts_matrix <-counts_matrix %>% 
@@ -104,6 +110,7 @@ DESEQ2 requires a paramater 'colData'  and we will point this to "deseq_samples"
 # TIME TO FACTOR columns (IMPORTANT for DESEQ2)
 So we now have all our sample information and just need to learn one more factor:
 factor
+
 # Let's factor timepoint and replicate for differential expression analysis
 You can think of a "factor" as a way of putting a meta tag on data. 
 It's actually required for DESEQ to do analysis only on data that has been factored!
@@ -123,6 +130,7 @@ deseq_samples$replicate <- factor(deseq_samples$replicate)
 ```{r saving sample sheet}
 
 save(deseq_samples, counts_matrix, file = "results/deseq_samples.RData")
+
 
 ```
 # Note 

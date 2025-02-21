@@ -75,7 +75,7 @@ To do this we will use the rownames function
 # Creating a dataframe with gene_id and gene_symbol
 # note creating columns with name = data
 g2s <- data.frame(gene_id = rownames(counts_matrix), gene_symbol = counts_matrix[ , 1])
-
+?data.frame
 # Let's save this using write.csv
 write.csv(g2s, "results/g2s.csv")
 ```

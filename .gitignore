@@ -1,5 +1,4 @@
 *00_run_pipeline*
-*STUDENTS*
 *.js
 *.css
 *.bam
@@ -63,3 +62,9 @@ work/*
 *.bed
 *.gz
 
+*.js
+*.css
+*.bam
+*.bai
+*star_salmon
+*.bigWig

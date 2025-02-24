@@ -1,0 +1,44 @@
+---
+title: "01_3_rprofile_IMPORTANT"
+author: "JR"
+date: "2025-02-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Below are instructions for installing DESeq2 and tidyverse on fiji-viz-3! 
+## The first two commands will need to be carried out on Fiji before launching your fiji-viz-3 RStudio session.
+
+## On Fiji:
+## Make new directory for workflow & version control
+$ mkdir ~/R/<Directory_Name>
+
+## Edit the following file to contain the devtoolset-10 line appended to your PATH:
+$ vim ~/.Renviron
+PATH=/opt/rh/devtoolset-10/root/bin:$PATH
+
+## Launch RStudio session on fiij-viz-3 with the following:
+## Be sure to request a SMALL resource profile (4 CPUs and 32GB RAM)
+## Queue can either be "sandbox" or "highmem"
+
+## In RStudio assign library directory created in first command
+> assign(".lib.loc", c("/Users/<IdentiKey>/R/<Directory_Name>", "/opt/R/4.3.1/lib/R/library/"), envir = environment(.libPaths))
+> .libPaths()
+
+## Install older version of curl due to v.6+ issues
+> install.packages("remotes")
+> library(remotes)
+> install_version("curl", "5.2.3")
+
+## Install BiocManager, DESeq2, and tidyverse
+> if (!requireNamespace("BiocManager", quietly = TRUE))
++ install.packages("BiocManager")
+## Notefor below: update=FALSE because of curl dependency
+> BiocManager::install("DESeq2", update=FALSE)
+> BiocManager::install("tidyverse", update=FALSE)
+> library(DESeq2)
+> library(tidyverse)
+
+## There will be a few informational items in the output when loading DESeq2 and tidyverse (largely due to dependencies overriding each other). I believe these can all be safely ignored.

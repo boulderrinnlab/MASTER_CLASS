@@ -101,7 +101,9 @@ dox_genes <- unique(dox_genes)
 
 # Renaming the column (handy code that is used a lot :)
 dox_genes <- dox_genes %>% 
-  rename(gene_name = `filtered_res_df_2$gene_name`)
+  rename(gene_name = 'filtered_res_df_2$gene_name')
+
+colnames(dox_genes)
 
 # Now let's write this out and do gene enrichment analysis
 write.table(dox_genes["gene_name"], row.names = FALSE, col.names = FALSE, "results/gene_names.csv")
@@ -152,7 +154,7 @@ t.test(res_df$baseMean, filtered_res_df_2$baseMean)
 
 ```
 # Result: The dox response genes have a higher basemean than all genes
-# Result: P = 0.4, FC = (33/0.2)
+# Result: P = 0.04, FC = (33/0.2)
 
 
 Everything is looking good so a common next step is to 

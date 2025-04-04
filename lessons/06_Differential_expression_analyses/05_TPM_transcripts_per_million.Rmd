@@ -81,7 +81,9 @@ were originally made.
 ```{r Distibution of TPM values }
 
 #first the distribution of TPM
-hist(TPM_not_zero$WT_0_R1, xlim = c(0,300), breaks = 1000)
+hist(TPM_not_zero$WT_0_R1, xlim = c(0,100), breaks = 1000)
+
+mean(TPM_not_zero$WT_0_R1)
 # weird we still see a lot of small values (e.g., 0.2314). let's filter our TPM object differently
 
 # First some cleaning up
@@ -94,6 +96,7 @@ view(TPM)
 TPM$gene_id <- NULL
 view(TPM)
 
+#TODO why doesn't work?
 # last clean up to move rownames back 
 TPM <- column_to_rownames(TPM, "gene_id")
 view(TPM)
@@ -105,11 +108,11 @@ TPM_filtered <- TPM[rowSums(TPM) > 1, ]
 any(rowSums(TPM_filtered) < 1)
 
 # For a positive control
-any(rowSums(TPM) < 1)
+any(rowSums(TPM) > 1)
 # Cool look like we are filtered to any row that adds up to at leat 1 tpm
 
 # Let's see if that histogram changed?
-hist(TPM_filtered$WT_0_R1, xlim = c(0,300), breaks = 1000)
+hist(TPM_filtered$WT_0_R1, xlim = c(0,150), breaks = 1000)
 
 # Lets compare means 
 mean(TPM_filtered$WT_0_R1)

@@ -296,11 +296,7 @@ plot_gene_expression <- function(genes_of_interest, df) {
 
 # Example usage:
 genes_of_interest <- c(
-  "ENSMUSG00000094125.1",
-  "ENSMUSG00000079247.2",
-  "ENSMUSG00000112027.1",
-  "ENSMUSG00000066632.3",
-  "ENSMUSG00000000031.16"
+  "ENSMUSG00000094125.1"
 )
 
 plot_gene_expression(genes_of_interest, TPM_filtered)

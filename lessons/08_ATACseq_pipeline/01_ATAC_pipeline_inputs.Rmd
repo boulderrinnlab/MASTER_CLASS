@@ -14,6 +14,8 @@ We previously ran the NF_CORE RNAseq Pipeline.
 This required some specific input files such as 
 genome sequence, sample descriptions etc.
 
+# HELPFUL SAMPLE SHEET / CONFIG file at end of this document
+
 The ATACseq analysis is both similar and different.
 Similar in that reads from Fastq files will be aligned to 
 the mouse genome. Instead of Salmon doing the quantification
@@ -40,7 +42,11 @@ https://nf-co.re/atacseq/2.1.2/
 set up the input files needed !
 You will need:
 (a) run.sh 
-(b) design file 
+(b) design file
+(c) mm10 blacklist
+(d) nextflow.config
+
+# Design, config and run files at end of .RMD 
 
 # Once you have this complete - run the pipeline !!
 # Hints:
@@ -62,6 +68,69 @@ These are samples in the sheet that have these col values:
 Also all the fastq's are there.
 
 (d) ATACseq pipeline also requires an out directory !
+
+
+# Atacseq sample sheet
+sample,fastq_1,fastq_2,replicate
+ESC_WT_control_30,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2767_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2767_R2.fastq.gz,1
+ESC_KO_control_60,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2774_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2774_R2.fastq.gz,1
+ESC_KO_control_30,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2773_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2773_R2.fastq.gz,1
+ESC_WT_control_120,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2779_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2779_R2.fastq.gz,1
+ESC_KO_control_90,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2784_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2784_R2.fastq.gz,1
+ESC_WT_control_150,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2780_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2780_R2.fastq.gz,1
+ESC_KO_control_120,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2785_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2785_R2.fastq.gz,1
+ESC_WT_control_90,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2778_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2778_R2.fastq.gz,1
+ESC_KO_control_0,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2772_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2772_R2.fastq.gz,1
+ESC_WT_control_0,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2766_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2766_R2.fastq.gz,1
+ESC_WT_control_60,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2768_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2768_R2.fastq.gz,1
+ESC_KO_control_150,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2786_R1.fastq.gz,/scratch/Shares/rinnclass/MASTER_CLASS/DATA/atacseq/JR2786_R2.fastq.gz,1
+
+# ATACseq nextflow.config
+
+process {
+  executor='slurm'
+  queue='short'
+  memory='16 GB'
+  maxForks=20
+}
+
+# ATACseq run.sh 
+# IMPORTANT ALL FILE PATHS NEED TO BE TO YOUR WORKING DIRECTOR
+# IMPORTANT curent file paths DO NOT work - need to change to you directory
+
+```{bash}
+#!/bin/bash
+#SBATCH -p long
+#SBATCH --job-name=ftc-atacseq
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=identikey@colorado.edu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=6gb
+#SBATCH --time=20:00:00
+#SBATCH --output=nextflow.out
+#SBATCH --error=nextflow.err
+
+pwd; hostname; date
+echo "You've requested $SLURM_CPUS_ON_NODE core. Let's do ATACseq !"
+echo "Running Nextflow from directory: $(pwd)"
+
+module load singularity/3.1.1
+
+nextflow run nf-core/atacseq -r 2.1.2 \
+-resume \
+-profile singularity \
+--input CLASS_ATAC_Design.csv \
+--outdir /scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq/00_run_pipeline/00_pipeline_run/pipeline_run \
+--fasta /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/GRCm38.p6.genome.fa \
+--gtf /scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf \
+--blacklist mm10-blacklist.v2.bed \
+--read_length 150 \
+--email identikey@colorado.edu \
+-c nextflow.config
+
+date
+```
 
 
 

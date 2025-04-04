@@ -108,16 +108,10 @@ ggplot(filtered_res_df, aes(x = padj,
 # Now let's retreive the values in these linear models
 Above we just plotted the lines on top of data. But now let's 
 get the actual values of the linear regression fits! 
+
+We just need to pick to variables and find the regression between them
+To do this we use the function "lm" and assign values to it 
 ```{r linear model data}
-
-ggplot(filtered_res_df, aes(x = padj, 
-                 y = pvalue)) +
-  geom_point()+
-  geom_abline(slope = 1, intercept = 0) +
-  geom_smooth(method = "lm")
-
-# We just need to pick to variables and find the regression between them
-# To do this we use the function "lm" and assign values to it 
 
 lm_fit <- lm(filtered_res_df$padj ~ filtered_res_df$pvalue)
 
@@ -250,7 +244,7 @@ ggplot(filtered_res_df, aes(x = pvalue,
   scale_x_continuous() +
   xlim(0, 0.01) +
   ylim(0, 0.01) +
-  scale_color_brewer(palette =  "Set1") 
+  scale_color_brewer(palette =  "Set3") 
 # coool so we zoomed in on the bottom left of the plot
 
 ```

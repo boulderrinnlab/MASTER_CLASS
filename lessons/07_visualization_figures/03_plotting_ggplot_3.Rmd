@@ -103,6 +103,8 @@ ggplot(gene_values,
   facet_wrap(gene_name ~ ., nrow = 2, ncol = 3) + 
   geom_point()
 
+?facet_wrap
+
 # Note the axis are all the same for each plot -- let's use 'scales = free' parameter
 ggplot(gene_values, 
        aes(x = log2FoldChange, y = padj )) +

@@ -28,6 +28,8 @@ Let's get started !
 
 gr <- GRanges(seqnames = c("chrX"), strand = c("+", "-", "*"), ranges = IRanges(start = c(1,200, 1000), end = c(30, 299, 1200)))
 
+#TODO solution
+IRanges::union
 # let's see 
 gr
 
@@ -38,7 +40,7 @@ gr
 
 # we can see all the information with seqinfo
 seqinfo(gr)
-
+?GRanges
 # we can see some additional place holders we have not changed such as the 
 # genome version or if the chromosome is circular. Seqlenght is the lenght of 
 # the chromosome. let's add this stuff !
@@ -75,10 +77,10 @@ Let's find all the peaks that overlap between 0_KO_R1 and 0_KO_R2
 ```{R find overlaps}
 
 # setting file path to peak files mentioned above:
-peaks1 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
+peaks1 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
 
 
-peaks2 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak")
+peaks2 <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak/ESC_WT_control_0_REP1.mLb.clN_peaks.broadPeak")
 
 peaks1 <- rtracklayer::import("<your_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak/ESC_KO_control_0_REP1.mLb.clN_peaks.broadPeak")
 

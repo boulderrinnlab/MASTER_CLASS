@@ -68,6 +68,7 @@ broad_consensus_counts <- broad_consensus_counts %>%
 
 # Clean up column names 
 colnames(broad_consensus_counts) <- gsub("_REP1", "_R1", gsub("\\.mLb\\.clN\\.sorted\\.bam", "", colnames(broad_consensus_counts)))
+
 count_columns <- colnames(broad_consensus_counts)
 
 # Create start of sample sheet and extract info from count_columns 

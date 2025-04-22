@@ -33,7 +33,8 @@ We are basically starting where we left off last lesson!
 
 # peak file "consensus_path" parameter of import_peaks function
 peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
-#peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
 
 # make file list (fl)
 fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")

@@ -43,7 +43,7 @@ length(my_peaks$KO_control_0)
 # Nice we have the overlaps of our non-dox, let's do the same for dox !
 # first grep out non 0 time point names
 dox_samples <- names(my_peaks)[!grepl("_0$", names(my_peaks))]
-
+dox_samples
 # Now indexing to make a list of GRanges of non-0 (no dox) time points
 dox_peaks <- my_peaks[dox_samples]
 

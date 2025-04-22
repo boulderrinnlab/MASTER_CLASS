@@ -1,0 +1,95 @@
+---
+title: "MY_PROJECT"
+author: "JR"
+date: "2025-03-17"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Here we go on an adventure to determine 
+
+## Goal to analyze time couurse data .....
+Specificaly I am looking at mouse MM10 with data wehere dox added to stem cell mouse 
+then RNA was collectred in 3 replicates and sequenced.
+
+RAW sequencefiles are here :
+Filepath/
+
+These fastqs were run throguh NF_CORE RNAS seq version X
+### Multiqc html is here:
+file path/
+### Outpdir NF_CORE is here:
+filepath/
+countsfile/
+tpm file
+
+### Other output NF_CORE testing from here
+/path
+paht/
+
+
+# DESEQ
+
+Output files / sav
+/results/sig_gene_df
+/results/final_gene_list
+
+# Creating a heat map to viusalize sig gene expression
+* note we use row centering and not 0 normalization.
+
+Loading data for heatmap:
+I am 
+
+```{r Loading data}
+
+# load TPM RESULTS: 
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/TPM_results/TPM_results.Rdata")
+
+# laod DESEQ2 results
+load("/scratch/Shares/rinnclass/MASTER_CLASS/lessons/06_Differential_expression_analyses/results/counts_results_DESEQ/DESEQ_results.rdata")
+
+```
+
+# (1) Cluster samples
+First step is calculating distance between all samples. Let's start with our
+TPM data as these are the values typically used for clustering and heatmaps. 
+
+# Note use of transmute (t) 
+# Note log TPM values being used
+```{r distance calculation}
+
+# Log-transform the TPM values. 
+# This helps deflate spurious and low values - common practice for clustering/heatmaps
+log_tpm_matrix <- log2(TPM_filtered + 1)
+
+# Now let's calculate how closely related each sample (time point) is to each other using DIST function.
+# We make a vector the length of genes in TPM_filtered. Then use correlation (DIST function) to find similarity.
+# For other methods check out dist menu 
+?dist
+
+# Let's start with euclidean distance / similarity based on log2 TPM values of genes in TPM_filtered.
+distance_matrix <- dist(t(log_tpm_matrix), method = "euclidean")
+
+# Now we use the function : HCLUST ! 
+# This performs the hierarchical clustering of each samples relationship
+?hclust
+# Other forms of clustering as well see menu above for now ward or complete
+# Downside of ward is it assumes a circle relationship where as complete is linear - like we have with time.
+hc_complete <- hclust(distance_matrix, method = "complete")
+
+# Now we can use plot() to plot the distance calucalated in hclust!
+plot(hc_complete, labels = colnames(log_tpm_matrix), main = "Global TPM Filtered Dendrogram ", sub = "sample relationship by time and replicate after dox treatment")
+# Cool we see that samples see to return closer to 0 after 96 hours of dox treatment
+# Also that the replicates are more similar than time points - a very good / expected thing 
+
+```
+
+# Result: WT_24_R3 is Sus
+
+For NEXT STEP DESEQ see 01_ 

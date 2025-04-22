@@ -26,7 +26,8 @@ source("../../util/00_our_first_function_lesson.R")
 # establishing peak path to the dir with MACS2 output peak files from NF_CORE ATACseq pipeline
 
 peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
-# peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+
+peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
 
 # creating a file list also needed for import_peaks function to get sample name associated with file
 fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
@@ -120,8 +121,9 @@ common_peaks@elementMetadata@listData[["name"]]
 ```{r (c) code to test function}
 
 # peak file "consensus_path" parameter of import_peaks function
-peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
-# peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
+# peak_path <- "<your_atac_pipeline_output_dir>/bwa/merged_library/macs2/broad_peak"
+
+peak_path <- "/scratch/Shares/rinnclass/MASTER_CLASS/lessons/08_ATACseq_pipeline/00_run_pipeline/00_pipeline_run/pipeline_run/bwa/merged_library/macs2/broad_peak"
 
 # source function
 source("../../util/00_our_first_function_lesson.R")
@@ -133,8 +135,9 @@ fl <- list.files(peak_path, full.names = TRUE, pattern = ".broadPeak")
 my_peaks <- import_peaks(consensus_file_path = peak_path)
 
 # test common_peaks function 
-common_peaks <- find_common_peaks(my_peaks)
+find_common_peaks()
 
+common_peaks <- find_common_peaks(my_peaks)
 ```
 NICE !! In the future that is all you will have to run (5 lines of code !!)
 HINT: This is a good example of what your final .RMD could look like above - nice and clean!

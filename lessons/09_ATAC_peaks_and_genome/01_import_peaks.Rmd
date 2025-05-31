@@ -13,6 +13,13 @@ library(stringr)
 library(GenomicRanges)
 ```
 
+# Youtube video for this class
+https://youtu.be/siGUPdBWA38
+
+# All needed data files can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
+
 # GOAL: To learn how to import peak files as GRanges and find overlaps between samples!
 # For review see previous lesson: 08_ATACseq_pipeline/04_granges.Rmd
 We now have peak files for each individual time point. Let's learn how to import these files

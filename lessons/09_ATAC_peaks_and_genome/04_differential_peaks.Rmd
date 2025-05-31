@@ -13,6 +13,16 @@ library(GenomicRanges)
 source("../../util/00_our_first_function_lesson.R")
 ```
 
+# Youtube video for this class:
+https://youtu.be/IAZk1m726Tc
+
+# All data files needed for this class can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
+# Genome annotation file needed can be downloaded here:
+https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
+
+
 # Goal: To find ATACseq peaks that change upon exposure to dox.
 First we will attempt a simple overlap of 0 time point (no dox)
 to the rest of the time points. This will tell us which peaks existed 

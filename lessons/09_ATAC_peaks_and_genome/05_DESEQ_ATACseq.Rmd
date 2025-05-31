@@ -10,6 +10,14 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Youtube video for this class
+https://youtu.be/bW4VPxyY-4I
+
+# Data file needed for this class:
+https://rinnformatics.colorado.edu/mouse_atacseq/consensus_peaks.mLb.clN.featureCounts.txt
+
+# And this file is needed
+https://rinnformatics.colorado.edu/mouse_atacseq/consensus_peaks.mLb.clN.annotatePeaks.txt
 
 # GOAL: Here we are going to use DESEQ to find peaks that change upon dox exposure.
 We used overlaps to find common peaks and peaks that were different between dox and non-dox

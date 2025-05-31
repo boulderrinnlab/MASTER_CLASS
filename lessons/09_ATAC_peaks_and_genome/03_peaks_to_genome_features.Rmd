@@ -12,6 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 source("../../util/00_our_first_function_lesson.R")
 ```
 
+# Youtube video for this class:
+https://youtu.be/QGVl_nXHg2E
+
+# All data files needed for this class can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
+# Genome annotation file needed can be downloaded here:
+https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
+
+
 # Goal: To determine where in the genome our peaks live!
 We will start to explore where our ATACseq peaks reside in the human genome
 and what features they correspond to (e.g., mRNAs, lincRNA and many more to explore)

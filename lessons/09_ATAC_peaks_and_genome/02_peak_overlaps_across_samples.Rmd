@@ -12,6 +12,12 @@ knitr::opts_chunk$set(echo = TRUE)
 source("../../util/00_our_first_function_lesson.R")
 ```
 
+# Youtube Video for this class
+https://youtu.be/MM6FO0KQGyE
+
+# All data needed for this class can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
 # GOAL : Find peaks that are present in all samples
 We will further home our overlap skills here while asking the question:
 How many peaks overlap in all samples? We previously did one overlap between

@@ -27,6 +27,12 @@ library(DESeq2)
 library(stringr)
 ```
 
+# Youtube video for this class:
+https://youtu.be/nEwYaVueNno
+
+# All data files for this class can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
 #### Objective: To determine if chromatin accessibility changes due to dox exposure.
 We have performed a time course series of experiements measuring chromating accessibility
 (ATACseq peaks)upon exposure to dox. These are 0, 30, 60, 90, 120, 150 minutes.

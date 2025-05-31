@@ -13,8 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Youtube video for this class:
 https://youtu.be/I54pSLbrukQ
 
-# All needed files for this section are here:
-https://rinnformatics.colorado.edu/mouse_atacseq/
+# Mouse genome annotation file can be downloaded here:
+https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
 
 # GOAL: level up to genomic Ranges (granges) to compare peak across samples and features.
 Our next objective is to make IRanges but for each of the chromosomes in the genome. This 
@@ -79,6 +79,9 @@ with two peak files and learn the fundementals that we can then apply
 to numerous peak files !
 
 Let's find all the peaks that overlap between 0_KO_R1 and 0_KO_R2
+
+All DATA NEEDED FOR PEAKS CAN BE DOWNLOADED HERE:
+https://rinnformatics.colorado.edu/mouse_atacseq/
 ```{R find overlaps}
 
 # setting file path to peak files mentioned above:

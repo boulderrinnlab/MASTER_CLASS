@@ -5,6 +5,10 @@ date: "2024-02-07"
 output: html_document
 ---
 
+# IMPORTANT: This is optional - recommended skipping to level 5.
+# All needed output files from this pipeline are provided here:
+https://rinnformatics.colorado.edu/
+
 # Goal: to install nextflow on a macintosh laptop computer
 
 # Youtube video for this class here:

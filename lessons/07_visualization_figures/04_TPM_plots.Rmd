@@ -17,6 +17,10 @@ library(ggplot2)
 library(dplyr)
 source("../../util/00_our_first_function_lesson.R")
 ```
+
+# Youtube video for this class:
+https://youtu.be/NvC1LTa1CYA
+
 # Goal: use TPM values to make plots of how genes change in abundance due to dox and time
 So far we have been learning to plot using the results of DESEQ2 such as pvalue, padj 
 Now we are going to take another step in plotting the abundance of each gene (TPM).
@@ -245,6 +249,9 @@ Yes we can - let's attempt to bundle that code for TPM file
 into a function !
 
 #####################################
+
+# Youtube video for this part of TPM plots (Bonus function)
+https://youtu.be/xAoRHpQytLc
 
 # Function
 ```{r exeRcise make our first function !}

@@ -16,6 +16,11 @@ library(broom)
 
 ```
 
+# Youtube video for this class:
+https://youtu.be/OTlFb3ZTW_4
+
+# Goal to continue expanding and practicing our GGplot knowledge !
+
 # Load data
 ```{r loading our RNAseq analysis data TPM & COUNTS}
 

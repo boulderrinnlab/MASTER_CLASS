@@ -4,6 +4,13 @@ author: "JR"
 date: "2023-12-18"
 output: html_document
 ---
+# IMPORTANT Optional:
+This class and level is optional if your are doing this on your local computer !
+
+# You can skip to level 5 
+# All needed output files are provided here:
+https://rinnformatics.colorado.edu/
+
 
 # Goal: to install nextflow on super computer FIJI
 # Youtube video for this class here:

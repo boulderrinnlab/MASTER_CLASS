@@ -7,10 +7,16 @@ editor_options:
   chunk_output_type: console
 ---
 
-# The NF_CORE pipeline requires a sample_sheet
+# OPTIONAL Recommended skip to level 5.
+# All needed output files are provided here:
+https://rinnformatics.colorado.edu/
 
+# The NF_CORE pipeline requires a sample_sheet we will make it below
 Please see here for more details:
 https://nf-co.re/rnaseq/3.14.0/docs/usage
+
+# Youtube video for this class
+https://youtu.be/SxroZ8T6j4U
 
 Here you will find all the details needed for input into the RNAseq pipeline.
 The most critical aspect for now is the sample sheet.

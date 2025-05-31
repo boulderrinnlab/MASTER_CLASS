@@ -11,6 +11,12 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Youtube video for this class
+https://youtu.be/NEBdRA00qks
+
+# All files needed for this class can be downloaded here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
+
 # Goal to get our essential files in order to run deseq2!
 # Oh and to learn some basic R skills towards our goals!
 The input to DESEQ2 is going to want "counts" these came from the program

@@ -9,6 +9,9 @@ output: html_document
 
 But where is all the data? !
 
+# Youtube video here:
+https://youtu.be/QrZ63T4yjr8
+
 You ran the pipeline in a directory that has the .config, .sh and samplesheet in it. In the 
 run.sh file there was a next flow flag for an output directory that looked like this:
 

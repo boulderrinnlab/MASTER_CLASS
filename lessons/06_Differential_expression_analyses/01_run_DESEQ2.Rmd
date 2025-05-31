@@ -23,6 +23,10 @@ library(DESeq2)
 ```
 
 # Goal to run DESEQ2 and get familiar with results
+
+# Youtube video for this class
+https://youtu.be/mKTJZh0wycQ
+
 # Please note that we need to organize our new directory with "analysis, figures and results directories"
 Using DESEQ2 we will determine which genes change in RNA expression levels
 at different times of dox exposure. Let's officially start doing some analysis!
@@ -35,6 +39,9 @@ https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DES
 
 # Let's start by loading in our counts_matrix and sample info
 # IMPORTANT: careful of order when loading Rdata :)
+
+# All needed files are provided here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
 ```{r loading in counts and sample info}
 
 # /scratch/Shares/rinnclass/MASTER_CLASS/lessons/05_RNAseq_in_R_studio/results

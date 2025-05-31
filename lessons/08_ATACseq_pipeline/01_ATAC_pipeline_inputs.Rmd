@@ -8,6 +8,14 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# IMPORTANT recommended to skip this class go to 
+02_ATACseq_Output.Rmd
+
+# All needed files for this section are here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
+# Youtube video for this class:
+https://youtu.be/aDA-oU3Pb6c
 
 # GOAL: Run the ATACseq NF_CORE pipeline!
 We previously ran the NF_CORE RNAseq Pipeline.

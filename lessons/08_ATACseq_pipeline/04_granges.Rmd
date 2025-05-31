@@ -10,6 +10,11 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Youtube video for this class:
+https://youtu.be/I54pSLbrukQ
+
+# All needed files for this section are here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
 
 # GOAL: level up to genomic Ranges (granges) to compare peak across samples and features.
 Our next objective is to make IRanges but for each of the chromosomes in the genome. This 

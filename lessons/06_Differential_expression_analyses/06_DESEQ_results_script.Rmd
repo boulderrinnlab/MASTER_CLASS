@@ -22,6 +22,11 @@ library(textshape)
 library(Rcpp)
 library(DESeq2)
 ```
+# Youtube video for this class:
+https://youtu.be/sbenlhARfao
+
+# All needed files are here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
 
 So far, we have done a lot of fundamental RNA sequencing analysis - great work!
 Now let's compile this and compress it into one RMD file. This will be a great way to

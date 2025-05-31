@@ -4,8 +4,15 @@ author: "JR"
 date: "2024-02-21"
 output: html_document
 ---
+# OPTIONAL Recommended skip to level 5.
+# All needed output files are provided here:
+https://rinnformatics.colorado.edu/
+
 
 ### CONGRATULATIONS !!!! If you are here you are ready to run the pipeline !!
+
+# Youtube video for this class
+https://youtu.be/aaV7Xd16a34
 
 # Fist make sure your run.sh is executbale 
 ```{bash}

@@ -12,10 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 
 ```
+# Youtube video for this class
+https://youtu.be/9DUHEOP7LuA
 
-
-Goal: Learn how to plot our data using GGPLOT and the coding logic in ggplot !
-
+# Goal: Learn how to plot our data using GGPLOT and the coding logic in ggplot !
 One of the best parts of R is the plotting abilities. You are, by analogy designing your own figures with code. You can run many stastical analyses and plot the outputs in the code to make a figure. Here we will focus on GGPLOT(GGPLOT2). The GG says it all:
 
 "Grammar of Graphics" -- it truly is a very pure and flexible way of plotting data for figures!

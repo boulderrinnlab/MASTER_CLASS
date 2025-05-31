@@ -17,6 +17,15 @@ library(dplyr)
 library(ggplot2)
 ```
 
+# Goal is to look at our DESEQ2 results across all timepoints analyzed
+
+# Youtube video for this class
+https://youtu.be/DXry7wZImII
+
+# All needed files are provided here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
+
+
 # Loading counts matrix raw input from Salmon (see pipeline documentation)
 ```{r loading counts objects}
 

@@ -20,6 +20,9 @@ source("../../util/plot_theme.R")
 
 ```
 
+# Youtube video for this class:
+https://youtu.be/sqMQYp0mqnQ
+
 # Goal create "heatmaps"to represent gene abundance across time and replicates.
 Heatmaps are a very common and powerful way to represent RNAseq data. It shows the 
 abundance of each gene, across all samples and shades them in colore

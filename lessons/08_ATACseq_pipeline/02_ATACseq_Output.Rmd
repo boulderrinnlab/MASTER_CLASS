@@ -9,6 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Youtube video for this class:
+https://youtu.be/5d-Kh4L2yYA
+
+# All needed files for this section are here:
+https://rinnformatics.colorado.edu/mouse_atacseq/
+
+
 # GOAL to explore the output files from the ATACseq pipeline !
 Congratulations, if you are here it means you have completed your 
 ATACseq pipeline run !

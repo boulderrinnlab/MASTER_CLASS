@@ -16,6 +16,12 @@ library(tibble)
 library(dplyr)
 
 ```
+
+# Youtube vidoe for this class:
+https://youtu.be/Q-F6VR5ptzk
+
+# Goal finalize our GGplot skills across all layers !
+
 # Load data
 ```{r loading our RNAseq analysis data TPM & COUNTS}
 # load TPM RESULTS: 

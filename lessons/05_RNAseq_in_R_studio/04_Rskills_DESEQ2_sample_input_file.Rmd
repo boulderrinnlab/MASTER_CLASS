@@ -16,6 +16,11 @@ library(dplyr)
 
 ```
 
+# All needed files are provided here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
+
+# Yotube video for this class
+https://youtu.be/OBn3LexkrRg
 
 # Goal: learn Rskills to create a 'colData' input file for DESEQ2
 DESEQ2 not only needs the counts of RNA per gene, but also what each sample is.

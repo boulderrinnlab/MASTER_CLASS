@@ -22,7 +22,11 @@ library(textshape)
 library(Rcpp)
 library(DESeq2)
 ```
+# Youtube video for this class:
+https://youtu.be/1DxBpCgB7yU
 
+# All needed files are here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
 
 # Goal to do some analysis with TPM values.
 We used the counts output from Salmon in the previous classes to do

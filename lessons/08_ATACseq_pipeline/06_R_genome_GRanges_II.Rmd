@@ -7,6 +7,12 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Youtube video for this class:
+https://youtu.be/f_0FKmnRRDg
+
+# Genome annotation file needed (also see previous 05_R_genome_GRanges.Rmd):
+https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
+
 # Goal explore properties of lncRNA and protein coding genes using R-code!
 We just finished last lesson with exploring some legnth features of genes.
 Mostly using the filter button on the R-studio viewer. Now let's ask these 

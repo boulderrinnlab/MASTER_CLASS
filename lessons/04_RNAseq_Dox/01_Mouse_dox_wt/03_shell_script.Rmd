@@ -5,8 +5,11 @@ date: "2024-02-16"
 output: html_document
 ---
 
+# OPTIONAL Recommended skip to level 5.
+# All needed output files are provided here:
+https://rinnformatics.colorado.edu/
 
-# Or last required input for the NF_CORE RNAseq pipeline is the SHELL SCRIPT (.sh file)
+# Our last required input for the NF_CORE RNAseq pipeline is the SHELL SCRIPT (.sh file)
 A shell script is a bunch of bash commands that will be run in a row. We can also add other
 languages by calling them up. In this case we will also invoke nextflow.
 
@@ -15,6 +18,9 @@ that typing them in one by one (which you could in theory do - but why waste tim
 
 I will paste in an example "run.sh" shell script and go line by line and then paste in at 
 the end of the document.
+
+# Youtube video for this class
+https://youtu.be/O-GkY73d2Wc
 
 ```{bash}
 ## This first line is called a shebang 

@@ -5,9 +5,15 @@ date: "2024-02-07"
 output: html_document
 ---
 
-# Goal: to install nextflow on a macintosh laptop computer
+# IMPORTANT OPTIONAL - very difficult recommened skipping to level 5.
+# All needed output files from this pipeline are provided here:
+https://rinnformatics.colorado.edu/
+
+
+# Goal: to install nextflow on a windows laptop computer
 
 # Youtube video for this class here:
+# IMPORTANT : we were not able to get this to work.
 
 
 

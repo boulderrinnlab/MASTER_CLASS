@@ -5,6 +5,11 @@ date: "2024-02-16"
 output: html_document
 ---
 
+# OPTIONAL Recommended skip to level 5.
+# All needed output files are provided here:
+https://rinnformatics.colorado.edu/
+
+
 # We are on the next step in setting up the NF_CORE RNAseq pipeline: the .config file.
 
 This will be called nextflow.config. IT contains information for nextflow on how to talk to your
@@ -18,6 +23,9 @@ https://www.nextflow.io/docs/latest/config.html
 # Our nextflow.config for Fiji 
 
 We will go through this line by line and then paste it all together at the end.
+
+# Youtube video for this class
+https://youtu.be/voPTc6NC-Eg
 
 ```{bash}
 

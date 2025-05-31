@@ -5,6 +5,9 @@ date: "2024-03-17"
 output: html_document
 ---
 
+# Youtube video for this class
+https://youtu.be/ZGdAiOTFpxQ
+
 # Here we are going to install our first packages !
 
 There are two repositories filled with all kinds of good "software" for R. Or packages.

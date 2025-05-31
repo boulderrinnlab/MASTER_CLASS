@@ -8,6 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Youtube video for this class:
+https://youtu.be/AVT-zgKYDJw
+
+#IMPORTANT - ALL BIGWIG FILES CAN BE DOWNLOADED HERE:
+https://rinnformatics.colorado.edu/mouse_rnaseq/bigwig/
 
 # Goal to visualize raw data for significant genes change due to dox across time.
 We have now done a bunch of analyses using statistics and other means to home in on
@@ -42,9 +47,7 @@ This is the genome version we used to align our reads in NF_CORE RNAseq pipeline
 Autoscale by slecting all samples and right click on left bar to select "group auto scale"
 
 THere are a lot more tips and tricks on this accompanying YouTube video:
-```{r}
-#TODO
-```
+https://youtu.be/AVT-zgKYDJw
 
 
 

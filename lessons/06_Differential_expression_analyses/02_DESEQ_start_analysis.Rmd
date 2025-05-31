@@ -19,7 +19,13 @@ library(ggplot2)
 #BiocManager::install("apeglm")
 
 ```
+# Goal is to run Deseq2 and then look at the results
 
+# yotube video for this class:
+https://youtu.be/WG5RHVbBhEE
+
+# All needed files are provided here:
+https://rinnformatics.colorado.edu/mouse_rnaseq/
 ```{r loading data}
 load("../05_RNAseq_in_R_studio/results/count_files.RData", verbose = T)
 load("../05_RNAseq_in_R_studio/results/deseq_samples.RData", verbose = T)

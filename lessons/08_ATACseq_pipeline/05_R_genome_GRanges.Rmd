@@ -16,6 +16,13 @@ library(IRanges)
 
 ```
 
+# Youtube video for this class
+https://youtu.be/Kxa2KF0D1SY
+
+# Genome annotation file needed is here:
+https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
+
+
 # GOAL: Get to know the features of your genome !
 The genome is a 3 Billion letter sequence that was a heroic effort
 accomplished in the year 2000. Since the goal has been to "annotate"
@@ -45,6 +52,9 @@ If not in class please download Gencode annotations gtf here : https://ftp.ebi.a
 ```{r loading in GENCODE GRanges annotation file}
 
 # we use rtracklayer::import to turn the annotations into start and stops (Iranges) w/ chr (Granges)This takes ~5min using GRanges Package.
+
+# This file can be downloaded here:
+# https://rinnformatics.colorado.edu/genome_annotations/Mus_musculus/Gencode/M25/gencode.vM25.annotation.gtf
 
 gencode_gr <- rtracklayer::import("/scratch/Shares/rinnclass/MASTER_CLASS/GENOMES/M25/gencode.vM25.annotation.gtf")
 

@@ -3,6 +3,7 @@ title: "06_knitting_ATAC_analyses"
 author: "JR"
 date: "2024-11-30"
 output: html_document
+output: github_document
 editor_options: 
   chunk_output_type: console
 ---

@@ -4,7 +4,8 @@ author: "JR"
 date: "2024-02-01"
 output: html_document
 ---
-
+# Youtube video for this class
+https://youtu.be/fHjwx_xNDoM
 
 # GOAL : To use our newly created SSH key (id_rsa.pub) to connect to GitHub.
 Git is a programming language that tracks changes to any documents. You tell

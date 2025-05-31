@@ -5,3 +5,5 @@ date: "2024-01-31"
 output: html_document
 ---
 
+# Youtube video for this class
+https://youtu.be/KRY8P48cLmI

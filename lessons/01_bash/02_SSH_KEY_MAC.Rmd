@@ -8,7 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+# Youtube video for this class is here :
+https://youtu.be/6J_xaMStFFs
 
 # SSH Keys : Allow two computers to communicate and know they are friends
 

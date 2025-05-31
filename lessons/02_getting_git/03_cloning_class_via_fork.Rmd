@@ -4,6 +4,8 @@ author: "JR"
 date: "2024-02-05"
 output: html_document
 ---
+# Youtube video for this class
+https://youtu.be/wHBXPBUoR7Q
 
 # Did you know you can copy any code available on github????
 Yes, indeed repositories can be shared. This could be to collaborate

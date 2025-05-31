@@ -5,6 +5,9 @@ date: "2024-02-01"
 output: html_document
 ---
 
+# Youtube video for this class:
+https://youtu.be/wWNVbHV5kTg
+
 # GOAL : Create a git repository that is tracked
 
 We are going to start to use git and github. Git is the 

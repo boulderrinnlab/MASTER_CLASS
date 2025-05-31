@@ -4,10 +4,8 @@ date: "1/31/2024"
 output: github_document
 ---
 
-# All code to follow along can be found here:
-https://github.com/boulderrinnlab/MASTER_CLASS/blob/main/lessons/01_bash/01_bashing_around.Rmd
-
 # Youtube video for this class is here :
+https://youtu.be/vW7jyPAfSuk
 
 Let's start with some of the very basics of BASH to navigate servers and your command line.
 

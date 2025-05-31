@@ -1,0 +1,41 @@
+---
+title: "10_Choose_your_own_adventure"
+author: "JR"
+date: "2025-05-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+CONGRATULATIONS !! You have aquired the fundemental skills for RNAseq and ATACseq !
+
+Now you can choose your own adventure and analyze more data !
+
+All DATA IS HERE FOR FREE:
+
+https://rinnformatics.colorado.edu/
+
+You can see more step by step detail on this youtube video:
+
+VIDEO
+
+There you will find both human and mouse RNAseq and ATACseq data. So far we have only focused on the mouse stem cell time course after exposure to DOX. Now we have the mathcing data for human - allowing us to ask a bunch of new questions!
+
+For example, here are some starting points:
+
+1) What genes are differentially regulated in both human and mouse stem cells upon exposure to DOX.
+
+2) Consider a safe set of conserved genes in mouse and human as those that go in the same direction.
+Meaning if a gene goes up in mouse does it also go up in human? Having a list of genes that only follow the same direction in both species would represent a conserved gene set of Dox responsive genes.
+
+3) What is then relationship between having an ATACseq peak nearing a gene and it's response to dox. For example do genes respond more if there is an ATACseq peak near them. In other words what is the average TPM for genes with ATACseq peaks versus those with out peaks.
+
+4) Where are the conserved regions of chromatin accessibility between human and mouse stem cells?
+
+5) Are there motifs enriched at dox responsive versus not responsive genes? This could indicate DOX is activating or repressing specific transcriptional pathways regulated by transcription factors.
+
+There are many more analyses that can be done. Please feel free to contribute your analyses towards our ultimate goal of primary scientific publication. The goal is to have a comprehensive study of how DOX affects gene expression in mouse and human stemc cell.
+
+Let's Go Citizen science - can't wait to see what you come up with !!
